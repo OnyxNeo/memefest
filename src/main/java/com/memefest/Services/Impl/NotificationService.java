@@ -21,17 +21,20 @@ import com.memefest.DataAccess.PostNotificationId;
 import com.memefest.DataAccess.Topic;
 import com.memefest.DataAccess.TopicFollowNotification;
 import com.memefest.DataAccess.TopicFollowNotificationId;
-import com.memefest.DataAccess.TopicFollower;
 import com.memefest.DataAccess.TopicPost;
 import com.memefest.DataAccess.TopicPostNotification;
 import com.memefest.DataAccess.TopicPostNotificationId;
-import com.memefest.DataAccess.User;
-import com.memefest.DataAccess.UserFollower;
-import com.memefest.DataAccess.JSON.EventJSON;
+import com.memefest.DataAccess.User;import com.memefest.DataAccess.JSON.EventJSON;
+import com.memefest.DataAccess.JSON.EventNotificationJSON;
 import com.memefest.DataAccess.JSON.EventPostJSON;
+import com.memefest.DataAccess.JSON.EventPostNotificationJSON;
 import com.memefest.DataAccess.JSON.PostJSON;
+import com.memefest.DataAccess.JSON.PostNotificationJSON;
+import com.memefest.DataAccess.JSON.TopicFollowNotificationJSON;
 import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.DataAccess.JSON.TopicPostJSON;
+import com.memefest.DataAccess.JSON.TopicPostNotificationJSON;
+import com.memefest.DataAccess.JSON.UserFollowNotificationJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.Services.EventOperations;
 import com.memefest.Services.FeedsOperations;
@@ -39,15 +42,8 @@ import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.PostOperations;
 import com.memefest.Services.TopicOperations;
 import com.memefest.Services.UserOperations;
-import com.memefest.Websockets.JSON.EventNotificationJSON;
-import com.memefest.Websockets.JSON.EventPostNotificationJSON;
-import com.memefest.Websockets.JSON.PostNotificationJSON;
-import com.memefest.Websockets.JSON.TopicFollowNotificationJSON;
-import com.memefest.Websockets.JSON.TopicPostNotificationJSON;
-import com.memefest.Websockets.JSON.UserFollowNotificationJSON;
 
 import jakarta.ejb.EJB;
-import jakarta.ejb.EJBException;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
@@ -122,75 +118,87 @@ public class NotificationService implements NotificationOperations{
         followNot.setUserId(user.getUserId());
         followNot.setSeen(false);
         entityManager.persist(followNot);
-        
         feedsOps.sendToAll(topicFollowNot);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //throw a custom exception to show object was not created
-    public void editTopicPostNotification(TopicPostNotificationJSON topicPostNot) throws NoResultException{
+    public void editTopicPostNotification(TopicPostNotificationJSON topicPostNot){
         if(topicPostNot == null)
             throw new NoResultException("No Notification");
-        TopicPostNotification topicPostNotEntity = null;
+        
         try{
-            topicPostNotEntity = getTopicPostNotificationEntity(topicPostNot);
+            TopicPostNotification topicPostNotEntity = getTopicPostNotificationEntity(topicPostNot);
             topicPostNotEntity.setSeen(true);
             entityManager.merge(topicPostNotEntity);   
         }
         catch(NoResultException ex){
-            if (topicPostNot.isCanceled())
-                return;
             User user = userOps.getUserEntity(topicPostNot.getUser());
             TopicPost topicPost = postOps.getTopicPostEntity(topicPostNot.getTopicPost());
             createTopicPostNotification(topicPost, user);
             return;     
         }
-        if (topicPostNot.isCanceled()){
-            entityManager.remove(topicPostNotEntity);
+    }
+
+    public void removeTopicPostNotification(TopicPostNotificationJSON postNot){
+        try{
+            TopicPostNotification postNotification = getTopicPostNotificationEntity(postNot);
+            this.entityManager.remove(postNotification);
+        }
+        catch(NoResultException ex){
+            return;
         }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void editUserFollowNotification(UserFollowNotificationJSON userFollowNotification) throws NoResultException{
+    public void editUserFollowNotification(UserFollowNotificationJSON userFollowNotification){
         if(userFollowNotification == null)
             throw new NoResultException("No Notification found");
-        FollowNotification userFollowEntity = null;
         try{
-           userFollowEntity = getUserFollowNotificationEntity(userFollowNotification);
-           userFollowEntity.setSeen(true);
-           entityManager.merge(userFollowEntity);
+            FollowNotification userFollowEntity = getUserFollowNotificationEntity(userFollowNotification);
+            userFollowEntity.setSeen(true);
+            entityManager.merge(userFollowEntity);
         }
-        catch(NoResultException ex){ 
-            if (userFollowNotification.isCanceled())
-                return;   
+        catch(NoResultException ex){
             createUserFollowNotification(userFollowNotification);
             return;
         }
-        if (userFollowNotification.isCanceled()){
-            entityManager.remove(userFollowEntity);
-        }
     }   
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void editTopicFollowNotification(TopicFollowNotificationJSON topicFollowNot) throws NoResultException{
-        if(topicFollowNot == null)
-            throw new NoResultException("No Notification found");
-        TopicFollowNotification userFollowEntity = null;
-        try {
-            userFollowEntity = getTopicFollowNotificationEntity(topicFollowNot);
-            userFollowEntity.setSeen(true);
-            entityManager.merge(userFollowEntity);
-        } catch (Exception e) {
-            if (topicFollowNot.isCanceled())
-                return;
-            createTopicFollowNotification(topicFollowNot);
-            editTopicFollowNotification(topicFollowNot);
+    public void removeUserFollowNotification(UserFollowNotificationJSON followNot){
+        try{
+            FollowNotification followNotification = getUserFollowNotificationEntity(followNot);
+            this.entityManager.remove(followNotification);
+        }catch(NoResultException ex){
             return;
         }
-        if (topicFollowNot.isCanceled()){
-            entityManager.remove(userFollowEntity);
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void editTopicFollowNotification(TopicFollowNotificationJSON topicFollowNot){
+        if(topicFollowNot == null)
+            throw new NoResultException("No Notification found");
+        try {
+            TopicFollowNotification userFollowEntity = getTopicFollowNotificationEntity(topicFollowNot);
+            userFollowEntity.setSeen(true);
+            entityManager.merge(userFollowEntity);
+        } catch (NoResultException e) {
+            createTopicFollowNotification(topicFollowNot);
+            return;
         }    
     }
+
+    public void removeTopicFollowNotification(TopicFollowNotificationJSON followNot){
+        try{
+            TopicFollowNotification followNotification = getTopicFollowNotificationEntity(followNot);
+            this.entityManager.remove(followNotification);
+        }
+        catch(NoResultException ex){
+            return;
+        }
+    }
+
+
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public TopicFollowNotification getTopicFollowNotificationEntity(TopicFollowNotificationJSON topicFollowNot) throws NoResultException{
@@ -288,27 +296,30 @@ public class NotificationService implements NotificationOperations{
         postNot.setUser(user);
         postNot.setSeen(false);
         entityManager.persist(postNot);
-        
-        feedsOps.sendToAll(postNotification);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    public void editPostNotification(PostNotificationJSON postNot) throws NoResultException{
+    public void editPostNotification(PostNotificationJSON postNot){
         if(postNot == null)
             throw new NoResultException("No Notification found");
-        PostNotification userFollowEntity = null;    
+            
         try{
-            userFollowEntity = getPostNotificationEntity(postNot);
+            PostNotification postNotEntity = getPostNotificationEntity(postNot);
+            postNotEntity.setSeen(postNot.getSeen());
         }
-        catch(NoResultException ex){
-            if (postNot.isCanceled())
-                return;    
+        catch(NoResultException ex){    
             createPostNotification(postNot);
-            editPostNotification(postNot);
             return;
         }
-        if (postNot.isCanceled()){
-            entityManager.remove(userFollowEntity);
+    }
+
+    public void removePostNotification(PostNotificationJSON postNot){
+        try{
+            PostNotification postNotification = getPostNotificationEntity(postNot);
+            this.entityManager.remove(postNotification);
+        }
+        catch(NoResultException ex){
+            return;
         }
     }
 
@@ -321,44 +332,45 @@ public class NotificationService implements NotificationOperations{
         eventNot.setEvent(event);
         eventNot.setUser(user);
         entityManager.persist(eventNot);
-
-        feedsOps.sendToAll(eventNotification);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //throw a custom exception to show object was not created
-    public void editEventNotification(EventNotificationJSON eventNot) throws NoResultException{
+    public void editEventNotification(EventNotificationJSON eventNot){
         if(eventNot == null)
             throw new NoResultException("No Event Notification found");
-        EventNotification eventNotEntity = null;
         try{
-            eventNotEntity = getEventNotificationEntity(eventNot);
+            EventNotification eventNotEntity = getEventNotificationEntity(eventNot);
             eventNotEntity.setSeen(eventNot.getSeen());
             entityManager.merge(eventNotEntity);
         }
         catch(NoResultException ex){
-            if (eventNot.isCanceled())
-                return;
             createEventNotification(eventNot);
         }
-        if (eventNot.isCanceled()){
-            entityManager.remove(eventNotEntity);
-        } 
+    }
+
+    public void removeEventNotification(EventNotificationJSON eventNot){
+        try{
+            EventNotification eventNotification = getEventNotificationEntity(eventNot);
+            this.entityManager.remove(eventNotification);
+        }
+        catch(NoResultException ex){
+            return;
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public EventNotification getEventNotificationEntity(EventNotificationJSON eventNotification) throws NoResultException{
         if(eventNotification != null && eventNotification.getEvent() != null){
-                Event event = eventOps.getEventEntity(eventNotification.getEvent());
-                User user = userOps.getUserEntity(eventNotification.getUser());
-                EventNotificationId eventNotId = new EventNotificationId();
-                eventNotId.setEvent_Id(event.getEvent_Id());
-                eventNotId.setUserId(user.getUserId());
-
-                EventNotification eventNotEntity = entityManager.find(EventNotification.class, eventNotId);
-                if(eventNotEntity == null)
-                    throw new NoResultException();
-                return eventNotEntity;
+            Event event = eventOps.getEventEntity(eventNotification.getEvent());
+            User user = userOps.getUserEntity(eventNotification.getUser());
+            EventNotificationId eventNotId = new EventNotificationId();
+            eventNotId.setEvent_Id(event.getEvent_Id());
+            eventNotId.setUserId(user.getUserId());
+            EventNotification eventNotEntity = entityManager.find(EventNotification.class, eventNotId);
+             if(eventNotEntity == null)
+                throw new NoResultException();
+            return eventNotEntity;
             
         }
         else
@@ -375,34 +387,36 @@ public class NotificationService implements NotificationOperations{
         eventPostNot.setPost(eventPost.getPost());
         eventPostNot.setUser(user);
         entityManager.persist(eventPostNot);
-
         feedsOps.sendToAll(eventPostNot);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //throw a custom exception to show object was not created
-    public void editEventPostNotification(EventPostNotificationJSON eventPostNot) throws NoResultException{
+    public void editEventPostNotification(EventPostNotificationJSON eventPostNot){
         if(eventPostNot == null)
             throw new NoResultException("No Notification");
-        EventPostNotification eventPostNotEntity = null;
         try{
-            eventPostNotEntity = getEventPostNotificationEntity(eventPostNot); 
+            EventPostNotification eventPostNotEntity = getEventPostNotificationEntity(eventPostNot); 
             eventPostNotEntity.setSeen(eventPostNot.getSeen());
             entityManager.merge(eventPostNotEntity); 
         }
-        catch(NoResultException ex){
-            if (eventPostNot.isCanceled())
-                return; 
+        catch(NoResultException ex){ 
             EventPost eventPost = postOps.getEventPostEntity(eventPostNot.getEventPost());
             User user = userOps.getUserEntity(eventPostNot.getUser());
             createEventPostNotification(eventPost, user);
-            editEventPostNotification(eventPostNot);
             return;     
         }
-        if (eventPostNot.isCanceled()){
-            entityManager.remove(eventPostNotEntity);
+    }
+    
+    public void removeEventPostNotification(EventPostNotificationJSON postNot){
+        try{
+            EventPostNotification postNotification = getEventPostNotificationEntity(postNot);
+            this.entityManager.remove(postNotification);
         }
-    }   
+        catch(NoResultException ex){
+            return;
+        }
+    }
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public EventPostNotification getEventPostNotificationEntity(EventPostNotificationJSON eventPostNotification) throws NoResultException{
@@ -430,12 +444,16 @@ public class NotificationService implements NotificationOperations{
             if(topicFollowNotification.getUser() == null && topicFollowNotification.getTopic() != null){
                 Topic topic = topicOps.getTopicEntity(topicFollowNotification.getTopic());
                 topicFollowers = this.entityManager.createNamedQuery("TopicFollowNotification.findByTopicId",TopicFollowNotification.class)
-                            .setParameter(1, topic.getTopic_Id()).getResultList().stream().collect(Collectors.toSet());
+                            .setParameter(":topicId", topic.getTopic_Id())
+                            .setParameter("seen", topicFollowNotification.getSeen())
+                            .getResultList().stream().collect(Collectors.toSet());
             }
             else if(topicFollowNotification.getUser()!= null && topicFollowNotification.getTopic() == null){
                 User user = userOps.getUserEntity(topicFollowNotification.getUser());
                 topicFollowers = this.entityManager.createNamedQuery("TopicFollowNotification.findByUserId",TopicFollowNotification.class)
-                                 .setParameter(1, user.getUserId()).getResultList().stream().collect(Collectors.toSet());
+                                 .setParameter("userId", user.getUserId())
+                                 .setParameter("seen", topicFollowNotification.getSeen())
+                                 .getResultList().stream().collect(Collectors.toSet());
             }
             else{
                 Topic topic = topicOps.getTopicEntity(topicFollowNotification.getTopic());
@@ -469,12 +487,16 @@ public class NotificationService implements NotificationOperations{
             if(userFollowNotification.getUser() != null && userFollowNotification.getFollower() == null){
                 User user = userOps.getUserEntity(userFollowNotification.getUser());
                 userFollowers = this.entityManager.createNamedQuery("FollowNotification.findByUserId",FollowNotification.class)
-                            .setParameter(1, user.getUserId()).getResultList().stream().collect(Collectors.toSet());
+                            .setParameter("userId", user.getUserId())
+                            .setParameter("seen", userFollowNotification.getSeen())
+                            .getResultList().stream().collect(Collectors.toSet());
             }
             else if(userFollowNotification.getUser()== null && userFollowNotification.getFollower() != null){
                 User user = userOps.getUserEntity(userFollowNotification.getUser());
                 userFollowers = this.entityManager.createNamedQuery("FollowNotification.findByFollowerId",FollowNotification.class)
-                                 .setParameter(1, user.getUserId()).getResultList().stream().collect(Collectors.toSet());
+                                 .setParameter("followerId", user.getUserId())
+                                 .setParameter("seen", userFollowNotification.getSeen())
+                                 .getResultList().stream().collect(Collectors.toSet());
             }
             else{
                 User follower = userOps.getUserEntity(userFollowNotification.getFollower());
@@ -494,70 +516,14 @@ public class NotificationService implements NotificationOperations{
          else 
              throw new NoResultException("No User Follows found for User");
     }
-/* 
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    public void removeTopicPostNotification(TopicPostNotificationJSON topicPostNotification){
-        try{
-            TopicPostNotification topicPostNot = getTopicPostNotificationEntity(topicPostNotification);
-            entityManager.remove(topicPostNot);
-        }
-        catch(NoResultException ex){
-            return;
-        }
-    }
-
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    public void removePostNotification(PostNotificationJSON postNotification){
-        try{
-            PostNotification postNot = getPostNotificationEntity(postNotification);
-            entityManager.remove(postNot);
-        }
-        catch(NoResultException ex){
-            return;
-        }
-    }
-    
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    public void removeEventPostNotification(EventPostNotificationJSON eventPostNotification){
-        try{
-            EventPostNotification eventPostNot = getEventPostNotificationEntity(eventPostNotification);
-            entityManager.remove(eventPostNot);
-        }
-        catch(NoResultException ex){
-            return;
-        }
-    }
-
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    public void removeEventNotification(EventNotificationJSON eventNotification){
-        try{
-            EventNotification eventNot = getEventNotificationEntity(eventNotification);
-            entityManager.remove(eventNot);
-        }
-        catch(NoResultException ex){
-            return;
-        }
-    }
-    /* 
-    public void removeTopicFollowNotification(TopicFollowNotificationJSON topicFollowNotification){
-        try{
-            Topi
-        }
-        catch(NoResultException ex){
-            return;
-        }
-    }
-
-    public void removeUserFollowNotification(UserFollowNotificationJSON userFollowNotification){
-
-    }
-    */
     
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Set<EventNotificationJSON> getEventNotificationInfo(EventNotificationJSON eventNotification) throws NoResultException{
         if(eventNotification.getUser() == null && eventNotification.getEvent() != null){
             Stream<EventNotification> query = entityManager.createNamedQuery("EventNotification.findByEventId", EventNotification.class)
-                                        .setParameter("eventId", eventNotification.getEvent().getEventID()).getResultStream();
+                                        .setParameter("eventId", eventNotification.getEvent().getEventID())
+                                        .setParameter("seen", eventNotification.getSeen())
+                                        .getResultStream();
                 
                 return  query.map(eventNotInst ->{
                                 return new EventNotificationJSON(0, LocalDateTime.ofInstant(eventNotInst.getCreated().toInstant(), ZoneId.systemDefault()), 
@@ -567,7 +533,9 @@ public class NotificationService implements NotificationOperations{
         }
         else if(eventNotification.getEvent() == null && eventNotification.getUser() != null){
                 Stream<EventNotification> query = entityManager.createNamedQuery("EventNotification.findByUserId", EventNotification.class)
-                .setParameter("userId", eventNotification.getUser().getUserId()).getResultStream();
+                .setParameter("userId", eventNotification.getUser().getUserId())
+                .setParameter("seen", eventNotification.getSeen())
+                .getResultStream();
 
                 return  query.map(eventNotInst ->{
                                 return new EventNotificationJSON(0, LocalDateTime.ofInstant(eventNotInst.getCreated().toInstant(), ZoneId.systemDefault()), 
@@ -587,7 +555,9 @@ public class NotificationService implements NotificationOperations{
     public Set<EventPostNotificationJSON> getEventPostNotificationInfo(EventPostNotificationJSON eventPostNotification) throws NoResultException{
         if(eventPostNotification != null && (eventPostNotification.getUser()== null && eventPostNotification.getPost() == null && eventPostNotification.getEventPost().getEvent() != null)){
                 Stream<EventPostNotification> query = entityManager.createNamedQuery("EventPostNotification.getEventPostNotificationByEventId", EventPostNotification.class)
-                                        .setParameter("eventId", eventPostNotification.getEventPost().getEvent().getEventID()).getResultStream();             
+                                        .setParameter("eventId", eventPostNotification.getEventPost().getEvent().getEventID())
+                                        .setParameter("seen", eventPostNotification.getSeen())
+                                        .getResultStream();             
                 return  query.map(eventPostNotInst ->{
                                 return new EventPostNotificationJSON(0,  
                                                                 new EventPostJSON(eventPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null ,null),
@@ -597,7 +567,9 @@ public class NotificationService implements NotificationOperations{
         }
         else if(eventPostNotification.getPost() == null && eventPostNotification.getEventPost().getEvent() == null && eventPostNotification.getUser() != null){
                 Stream<EventPostNotification> query = entityManager.createNamedQuery("EventPostNotification.getEventPostNotificationByUserId", EventPostNotification.class)
-                .setParameter("userId", eventPostNotification.getUser().getUserId()).getResultStream();
+                .setParameter("userId", eventPostNotification.getUser().getUserId())
+                .setParameter("seen", eventPostNotification.getSeen())
+                .getResultStream();
 
                 return  query.map(eventPostNotInst ->{
                                 return new EventPostNotificationJSON(0,  
@@ -610,7 +582,9 @@ public class NotificationService implements NotificationOperations{
         
         else if(eventPostNotification.getPost() != null && eventPostNotification.getEventPost().getEvent() == null && eventPostNotification.getUser() == null){
                 Stream<EventPostNotification> query = entityManager.createNamedQuery("EventPostNotification.getEventPostNotificationByPostId", EventPostNotification.class)
-                .setParameter("postId", eventPostNotification.getPost().getPostId()).getResultStream();
+                .setParameter("postId", eventPostNotification.getPost().getPostId())
+                .setParameter("seen", eventPostNotification.getSeen())
+                .getResultStream();
 
                 return  query.map(eventPostNotInst ->{
                                 return new EventPostNotificationJSON(0,  
@@ -623,7 +597,9 @@ public class NotificationService implements NotificationOperations{
         else if (eventPostNotification.getPost() != null && eventPostNotification.getUser() != null && eventPostNotification.getEventPost().getEvent() == null){
             Stream<EventPostNotification> query =entityManager.createNamedQuery("EventPostNotification.getEventPostNotificationByPostId&UserId", EventPostNotification.class)
                 .setParameter("postId", eventPostNotification.getEventPost().getPostId())
-                .setParameter("userId", eventPostNotification.getUser().getUserId()).getResultStream();
+                .setParameter("userId", eventPostNotification.getUser().getUserId())
+                .setParameter("seen", eventPostNotification.getSeen())
+                .getResultStream();
 
                 return query.map(eventPostNontInst ->{
                         return new EventPostNotificationJSON(0, 
@@ -635,7 +611,9 @@ public class NotificationService implements NotificationOperations{
           else if (eventPostNotification.getPost() != null  && eventPostNotification.getUser() == null && eventPostNotification.getEventPost().getEvent() != null){
             Stream<EventPostNotification> query =entityManager.createNamedQuery("EventPostNotification.getEventPostNotificationByPostId&EventId", EventPostNotification.class)
                 .setParameter("postId", eventPostNotification.getEventPost().getPostId())
-                .setParameter("eventId", eventPostNotification.getEventPost().getEvent().getEventID()).getResultStream();
+                .setParameter("eventId", eventPostNotification.getEventPost().getEvent().getEventID())
+                .setParameter("seen", eventPostNotification.getSeen())
+                .getResultStream();
 
                 return query.map(eventPostNontInst ->{
                         return new EventPostNotificationJSON(0, 
@@ -647,7 +625,9 @@ public class NotificationService implements NotificationOperations{
         else if (eventPostNotification.getPost() == null  && eventPostNotification.getUser() != null && eventPostNotification.getEventPost().getEvent() != null){
             Stream<EventPostNotification> query =entityManager.createNamedQuery("EventPostNotification.getEventPostNotificationByUserId&EventId", EventPostNotification.class)
                 .setParameter("eventId", eventPostNotification.getEventPost().getEvent().getEventID())
-                .setParameter("userId", eventPostNotification.getUser().getUserId()).getResultStream();
+                .setParameter("userId", eventPostNotification.getUser().getUserId())
+                .setParameter("seen", eventPostNotification.getSeen())
+                .getResultStream();
 
                 return query.map(eventPostNontInst ->{
                         return new EventPostNotificationJSON(0, 
@@ -670,7 +650,9 @@ public class NotificationService implements NotificationOperations{
     public Set<TopicPostNotificationJSON> getTopicPostNotificationInfo(TopicPostNotificationJSON topicPostNotification){
         if(topicPostNotification.getTopicPost().getTopic() != null && topicPostNotification.getUser()== null && topicPostNotification.getPost()== null){
                 Stream<TopicPostNotification> query = entityManager.createNamedQuery("TopicPostNotification.getTopicNotificationByTopicId", TopicPostNotification.class)
-                                        .setParameter("topicId", topicPostNotification.getTopicPost().getTopic().getTopicId()).getResultStream();
+                                        .setParameter("topicId", topicPostNotification.getTopicPost().getTopic().getTopicId())
+                                        .setParameter("seen", topicPostNotification.getSeen())
+                                        .getResultStream();
                 
                 return  query.map(topicPostNotInst ->{
                                 return new TopicPostNotificationJSON(0,  
@@ -681,7 +663,9 @@ public class NotificationService implements NotificationOperations{
         }
         else if(topicPostNotification.getUser() != null && topicPostNotification.getTopicPost().getTopic() == null && topicPostNotification.getPost() == null){
                 Stream<TopicPostNotification> query = entityManager.createNamedQuery("TopicPostNotification.getTopicNotificationByUserId", TopicPostNotification.class)
-                .setParameter("userId", topicPostNotification.getUser().getUserId()).getResultStream();
+                .setParameter("userId", topicPostNotification.getUser().getUserId())
+                .setParameter("seen", topicPostNotification.getSeen())
+                .getResultStream();
 
                 return  query.map(topicPostNotInst ->{
                                 return new TopicPostNotificationJSON(0,  
@@ -693,7 +677,9 @@ public class NotificationService implements NotificationOperations{
         
         else if(topicPostNotification.getUser() == null && topicPostNotification.getTopicPost().getTopic() == null && topicPostNotification.getPost() != null){
                 Stream<TopicPostNotification> query = entityManager.createNamedQuery("TopicPostNotification.getTopicNotificationByPostId", TopicPostNotification.class)
-                .setParameter("postId", topicPostNotification.getPost().getPostId()).getResultStream();
+                .setParameter("postId", topicPostNotification.getPost().getPostId())
+                .setParameter("seen", topicPostNotification.getSeen())
+                .getResultStream();
 
                 return  query.map(topicPostNotInst ->{
                                 return new TopicPostNotificationJSON(0,  
@@ -706,6 +692,7 @@ public class NotificationService implements NotificationOperations{
             Stream<EventPostNotification> query =entityManager.createNamedQuery("TopicPostNotification.getTopicPostNotificationByPostId&UserId", EventPostNotification.class)
                 .setParameter("postId", topicPostNotification.getTopicPost().getPostId())
                 .setParameter("userId", topicPostNotification.getUser().getUserId())
+                .setParameter("seen", topicPostNotification.getSeen())
                 .getResultStream();
                 return query.map(topicPostNontInst ->{
                         return new TopicPostNotificationJSON(0, 
@@ -716,6 +703,7 @@ public class NotificationService implements NotificationOperations{
         }else if (topicPostNotification.getPost() == null && topicPostNotification.getUser() != null && topicPostNotification.getTopicPost().getTopic() != null){
             Stream<EventPostNotification> query =entityManager.createNamedQuery("TopicPostNotification.getTopicPostNotificationByUserId&TopicId", EventPostNotification.class)
                 .setParameter("userId", topicPostNotification.getUser().getUserId())
+                .setParameter("seen", topicPostNotification.getSeen())
                 .setParameter("topicId", topicPostNotification.getTopicPost().getTopic().getTopicId())
                 .getResultStream();
                 return query.map(topicPostNontInst ->{
@@ -728,6 +716,7 @@ public class NotificationService implements NotificationOperations{
             Stream<EventPostNotification> query =entityManager.createNamedQuery("TopicPostNotification.getTopicPostNotificationByTopicId&PostId", EventPostNotification.class)
                 .setParameter("postId", topicPostNotification.getTopicPost().getPostId())
                 .setParameter("topicId", topicPostNotification.getTopicPost().getTopic().getTopicId())
+                .setParameter("seen", topicPostNotification.getSeen())
                 .getResultStream();
                 return query.map(topicPostNontInst ->{
                         return new TopicPostNotificationJSON(0, 
@@ -750,7 +739,9 @@ public class NotificationService implements NotificationOperations{
     public Set<PostNotificationJSON> getPostNotificationInfo(PostNotificationJSON postNotification){
         if(postNotification != null && (postNotification.getUser()!= null && postNotification.getPost()!= null)){
                 Stream<PostNotification> query = entityManager.createNamedQuery("PostNotification.getByUserId", PostNotification.class)
-                                        .setParameter("userId", postNotification.getPost().getUser().getUserId()).getResultStream();
+                                        .setParameter("userId", postNotification.getPost().getUser().getUserId())
+                                        .setParameter("seen", postNotification.getSeen())
+                                        .getResultStream();
                 
                 return  query.map(topicPostNotInst ->{
                                 return new PostNotificationJSON(0,  
@@ -761,7 +752,9 @@ public class NotificationService implements NotificationOperations{
         }
         else if(postNotification.getPost() != null && postNotification.getUser() == null){
                 Stream<PostNotification> query = entityManager.createNamedQuery("PostNotification.getByPostId", PostNotification.class)
-                .setParameter("postId", postNotification.getPost().getPostId()).getResultStream();
+                .setParameter("postId", postNotification.getPost().getPostId())
+                .setParameter("seen", postNotification.getSeen())
+                .getResultStream();
 
                 return  query.map(topicPostNotInst ->{
                                 return new PostNotificationJSON(0,  

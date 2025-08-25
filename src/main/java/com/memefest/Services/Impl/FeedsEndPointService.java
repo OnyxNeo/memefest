@@ -4,17 +4,16 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.memefest.DataAccess.User;
+import com.memefest.DataAccess.JSON.EventPostNotificationJSON;
 import com.memefest.DataAccess.JSON.PostJSON;
+import com.memefest.DataAccess.JSON.PostNotificationJSON;
+import com.memefest.DataAccess.JSON.TopicPostNotificationJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.Services.EventOperations;
 import com.memefest.Services.FeedsOperations;
 import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.TopicOperations;
 import com.memefest.Services.UserOperations;
-import com.memefest.Websockets.JSON.EventPostNotificationJSON;
-import com.memefest.Websockets.JSON.PostNotificationJSON;
-import com.memefest.Websockets.JSON.TopicPostNotificationJSON;
 
 import jakarta.websocket.Session;
 import jakarta.annotation.PostConstruct;

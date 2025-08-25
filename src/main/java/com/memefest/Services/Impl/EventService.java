@@ -12,9 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import javax.naming.NoPermissionException;
 
 import com.memefest.DataAccess.Category;
 import com.memefest.DataAccess.Event;
@@ -22,12 +19,10 @@ import com.memefest.DataAccess.EventCategory;
 import com.memefest.DataAccess.EventCategoryId;
 import com.memefest.DataAccess.Image;
 import com.memefest.DataAccess.User;
-import com.memefest.DataAccess.Video;
 import com.memefest.DataAccess.JSON.CategoryJSON;
 import com.memefest.DataAccess.JSON.EventJSON;
 import com.memefest.DataAccess.JSON.EventPostJSON;
 import com.memefest.DataAccess.JSON.ImageJSON;
-import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.DataAccess.JSON.VideoJSON;
 import com.memefest.Services.CategoryOperations;
@@ -41,7 +36,6 @@ import com.memefest.Services.VideoOperations;
 import jakarta.annotation.Resource;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
-import jakarta.ejb.EJBTransactionRolledbackException;
 import jakarta.ejb.ScheduleExpression;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.Timeout;
@@ -52,13 +46,10 @@ import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.ejb.TransactionManagement;
 import jakarta.ejb.TransactionManagementType;
-import jakarta.ejb.TransactionRolledbackLocalException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceContextType;
-import jakarta.persistence.Query;
-import jakarta.websocket.Session;
 
 
 @TransactionManagement(TransactionManagementType.CONTAINER)
@@ -282,6 +273,7 @@ public class EventService implements EventOperations{
         removeEvent(event);
     }
 
+
     //@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public EventJSON getEventInfo(EventJSON event)throws NoResultException{
         Event eventEntity = getEventEntity(event);
@@ -382,7 +374,7 @@ public class EventService implements EventOperations{
             });
     }
 
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void removeEvent (EventJSON event){
         if(event.isCanceled()){
             try{
@@ -400,8 +392,6 @@ public class EventService implements EventOperations{
     //@TransactionAttribute.
     public Set<EventJSON> searchEvents(EventJSON event)throws NoResultException, EJBException{
         List<Event> events = new ArrayList<Event>();
-        Set<EventJSON> eventResults = new HashSet<EventJSON>();
-
         if(event == null){
             events = this.entityManager.createNamedQuery("Event.getAll", Event.class).getResultList();
         }

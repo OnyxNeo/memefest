@@ -1,6 +1,5 @@
 package com.memefest.Services.Impl;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +22,6 @@ import com.memefest.DataAccess.JSON.UserSecurityJSON;
 import com.memefest.Services.FeedsOperations;
 import com.memefest.Services.UserOperations;
 import com.memefest.Services.UserSecurityService;
-import com.memefest.Websockets.JSON.UserFollowNotificationJSON;
 
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
@@ -144,6 +142,12 @@ public class UserService implements UserSecurityService, UserOperations{
        catch(NoResultException ex){
         return null;
        }
+    }
+
+    public Set<UserJSON> getAllUsers(){
+        return getUserEntities().stream().map(candidate ->{
+            return getUserInfo(new UserJSON(candidate.getUserId(), null));
+        }).collect(Collectors.toSet());
     }
 
     //return a no result exception if user does not exist

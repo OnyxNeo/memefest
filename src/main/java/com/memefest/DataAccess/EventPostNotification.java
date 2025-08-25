@@ -6,7 +6,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -15,20 +14,21 @@ import jakarta.persistence.Table;
 
 @NamedQueries({
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByEventId", 
-        query = "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId"),
+        query = "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND ePN.seen = :seen"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByPostId",
-        query = "SELECT epN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.postId = :postId"),
+        query = "SELECT epN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.postId = :postId AND ePN.seen = :seen"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByUserId",
-        query = "SELECT epN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId"),
+        query = "SELECT epN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId "
+                    + "AND epN.seen = :seen"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByPostId&UserId",
         query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId AND"
-                    + " ePN.eventPostNot.postId = :postId"),
+                    + " ePN.eventPostNot.postId = :postId AND epN.seen = :seen"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByPostId&EventId",
         query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND"
-                    + " ePN.eventPostNot.postId = :postId"),
+                    + " ePN.eventPostNot.postId = :postId AND ePN.seen = :seen"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByUserId&EventId",
         query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND"
-                    + " ePN.eventPostNot.recipientId = :userId")
+                    + " ePN.eventPostNot.recipientId = :userId AND ePN.seen = :seen")
 })
 @Entity(name = "EventPostNotificationEntity")
 @Table(name = "EVENT_POST_NOTIFICATION")

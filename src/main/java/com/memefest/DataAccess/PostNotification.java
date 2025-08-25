@@ -16,11 +16,13 @@ import jakarta.persistence.Table;
 @NamedQueries({
     @NamedQuery(
         name = "PostNotification.getByUserId",
-        query = "SELECT pn FROM PostNotificationEntity pn WHERE pn.id.recipientId = :userId"
+        query = "SELECT pn FROM PostNotificationEntity pn WHERE pn.id.recipientId = :userId AND"
+                    + " pn.seen = :seen"
     ),
     @NamedQuery(
         name = "PostNotification.getByPostId",
-        query = "SELECT pn FROM PostNotificationEntity pn WHERE pn.id.postId = :postId"
+        query = "SELECT pn FROM PostNotificationEntity pn WHERE pn.id.postId = :postId AND "
+                + "pn.seen = :seen"
     )
 })
 @Entity(name = "PostNotificationEntity")

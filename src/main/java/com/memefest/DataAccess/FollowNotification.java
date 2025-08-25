@@ -15,11 +15,11 @@ import jakarta.persistence.Table;
     {
         @NamedQuery(
             name = "FollowNotification.findByFollowerId",
-            query = "SELECT f FROM FollowNotificationEntity f WHERE f.id.followerId = :followerId"
+            query = "SELECT f FROM FollowNotificationEntity f WHERE f.id.followerId = :followerId AND f.seen = :seen"
         ),
         @NamedQuery(
             name = "FollowNotification.findByUserId",
-            query = "SELECT f FROM FollowNotificationEntity f WHERE f.id.userId = :userId"
+            query = "SELECT f FROM FollowNotificationEntity f WHERE f.id.userId = :userId AND f.seen = :seen"
         )
     }
 )

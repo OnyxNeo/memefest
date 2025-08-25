@@ -21,6 +21,8 @@ public interface CategoryOperations {
     
     public void removeCategoryFollowers(CategoryJSON categoory);
 
+    public void removeParentCategories(SubCategoryJSON subCategory);
+
     public void editSubCategory(SubCategoryJSON subCategory);
 
     //public void editMainCategory(CategoryJSON mainCategory);
@@ -38,6 +40,8 @@ public interface CategoryOperations {
     //public MainCategory getMainCategoryFromCategory(CategoryJSON category);
 
     public Set<CategoryJSON> searchCategory(CategoryJSON category);
+
+    public void removeCategory(CategoryJSON category);
 
     public Set<CategoryFollower> getCategoryFollowers(CategoryJSON category);
 

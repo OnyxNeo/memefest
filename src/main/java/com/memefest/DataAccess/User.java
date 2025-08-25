@@ -109,7 +109,7 @@ public class User {
 
   @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy= "user")
   private Set<EventNotification> eventNotifications;
-
+  
   public Set<EventNotification> getEventNotifications(){
     return this.eventNotifications;
   }

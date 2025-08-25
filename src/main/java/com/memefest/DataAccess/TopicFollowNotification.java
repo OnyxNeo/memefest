@@ -15,10 +15,10 @@ import jakarta.persistence.Table;
 @NamedQueries({
   @NamedQuery(
     name = "TopicFollowNotification.findByTopicId",
-    query = "SELECT u FROM TopicFollowNotificationEntity u WHERE u.id.topicId = :topicId"),
+    query = "SELECT u FROM TopicFollowNotificationEntity u WHERE u.id.topicId = :topicId AND u.seen = :seen"),
   @NamedQuery(
     name = "TopicFollowNotification.findByUserId",
-    query = "SELECT u FROM TopicFollowNotificationEntity u WHERE u.id.userId = :userId")
+    query = "SELECT u FROM TopicFollowNotificationEntity u WHERE u.id.userId = :userId AND u.seen = :seen")
 })
 @Entity(name = "TopicFollowNotificationEntity")
 @Table(name = "TOPIC_FOLLOW_NOTIFICATION")

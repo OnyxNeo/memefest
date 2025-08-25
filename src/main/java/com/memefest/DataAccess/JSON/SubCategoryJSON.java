@@ -10,9 +10,6 @@ public class SubCategoryJSON extends CategoryJSON {
   @JsonProperty("ParentCategories")
   private Set<CategoryJSON> parentCategories;
 
-  @JsonProperty("CancelParentCategories")
-  private Set<CategoryJSON> canceledCats;  
-
   //@JsonProperty("MainCategory")
   //private CategoryJSON mainCategory;
   
@@ -24,7 +21,6 @@ public class SubCategoryJSON extends CategoryJSON {
     super(categoryId, categoryName, topics, null, null);
     this.parentCategories = parentCategories;
     //this.mainCategory = mainCategory;
-    this.canceledCats = canceledCats;
   }
   
   public Set<CategoryJSON> getParentCategories() {
@@ -34,15 +30,6 @@ public class SubCategoryJSON extends CategoryJSON {
   public void setParentCategories(Set<CategoryJSON> parentCategories) {
     this.parentCategories = parentCategories;
   }
-
-  public Set<CategoryJSON> getCanceledParentCategories() {
-    return this.canceledCats;
-  }
-  
-  public void setCanceledParentCategories(Set<CategoryJSON> canceledParentCategories) {
-    this.canceledCats = canceledParentCategories;
-  }
-
   /* 
   public void setMainCategory(CategoryJSON category){
     this.mainCategory = category;

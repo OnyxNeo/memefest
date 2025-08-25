@@ -40,9 +40,6 @@ import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.PostOperations;
 import com.memefest.Services.TopicOperations;
 import com.memefest.Services.UserOperations;
-import com.memefest.Websockets.JSON.PostNotificationJSON;
-import com.memefest.Websockets.JSON.TopicPostNotificationJSON;
-
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
 import jakarta.ejb.EJBTransactionRolledbackException;
@@ -112,17 +109,21 @@ public class PostService implements PostOperations{
                         catOps.editCategory(category);
                         Category categoryEntity = catOps.getCategoryEntity(category);
                         createPostCategory(postEntity, categoryEntity);
-                });
-            if(post.getCanceledCategories() != null)
-                post.getCanceledCategories().stream().forEach(category -> {
-                        catOps.editCategory(category);
-                        Category categoryEntity = catOps.getCategoryEntity(category);
-                        removePostCategory(postEntity, categoryEntity);
-                });
+            });
         }
         catch(NoResultException ex){
             return;
         }
+    }
+
+    public void removePostCategory(PostJSON post){
+        Post postEntity = getPostEntity(post);
+        if(post.getCategories() != null)        
+            post.getCategories().stream().forEach(category -> {     
+                catOps.editCategory(category);
+                    Category categoryEntity = catOps.getCategoryEntity(category);
+                        removePostCategory(postEntity, categoryEntity);
+        });
     }
 
     private void createPostCategory(Post post, Category category){
@@ -131,6 +132,8 @@ public class PostService implements PostOperations{
         postCat.setPost_Id(post.getPost_Id());
         entityManager.persist(postCat);
     }
+
+    
 
     private Set<CategoryJSON> getPostCategories(PostJSON post){
         if(post== null || post.getCategories() == null)
@@ -176,7 +179,6 @@ public class PostService implements PostOperations{
                 eventOperations.editEvent(eventPost.getEvent());
                 event = eventOperations.getEventEntity(eventPost.getEvent());
             }
-
             try{
                 postEntity = getPostEntity((PostJSON)eventPost);    
             }catch(NoResultException | EJBException ex) {
@@ -185,13 +187,11 @@ public class PostService implements PostOperations{
                 postEntity = getPostEntity(eventPost);
             }
             createEventPost (postEntity, event);
-            
         }
-        removeEventPost(eventPost);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    private void removeEventPost(EventPostJSON eventPost){
+    public void removeEventPost(EventPostJSON eventPost){
         if(eventPost.isCancelled() == false)
             return;
         EventPost eventPostEntity = null;
@@ -267,6 +267,15 @@ public class PostService implements PostOperations{
         return eventPost;
     }
 
+    public Set<EventPostJSON> getEventPostsByEvent(EventJSON event) throws EJBException{
+        Event eventEntity = eventOperations.getEventEntity(event);
+        return eventEntity.getPosts().stream().map(candidate ->{
+                        return getEventPostInfo(new EventPostJSON(candidate.getPost_Id(), null, null, 
+                                                        0, 0, null, new EventJSON(candidate.getEvent().getEvent_Id(), null, null, null, null, null, null, null, null, null, null, null, null, null, null)
+                                                        , null, null));
+                    }).collect(Collectors.toSet());   
+    }    
+
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //add custom exception to show object was not created
     public void editRepost(RepostJSON post){
@@ -291,10 +300,21 @@ public class PostService implements PostOperations{
             //editRepost(post);
             return;
         }
-        removeRepost(post);
     }
 
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    public Set<RepostJSON> getRepostsByUser(UserJSON user)throws NoResultException{
+        User userEntity = userOperations.getUserEntity(user);
+        return entityManager.createNamedQuery("Repost.findByUserId", Repost.class)
+                    .setParameter("userId", userEntity.getUserId())
+                        .getResultStream().map(candidate ->{
+                            return getRepostInfo(new RepostJSON(candidate.getPost().getPost_Id(), null, null, 0, 0,
+                                             new UserJSON(candidate.getUser().getUserId(),
+                                              null),null , null, null));
+                }).collect(Collectors.toSet());
+    }
+
+
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public void removeRepost(RepostJSON post){
         if(post.isCanceled() ==  false)
             return;
@@ -396,12 +416,10 @@ public class PostService implements PostOperations{
         createPostReplies(post);
             //editPostReplies(post);
             //return;
-        
-        removePostReplies(post);
     }
     
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    private void removePostReplies(PostWithReplyJSON postWithReply) {
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void removePostReplies(PostWithReplyJSON postWithReply) {
         if(postWithReply.getPosts() == null)
             return;
         for (PostJSON post : postWithReply.getPosts()) {
@@ -431,7 +449,6 @@ public class PostService implements PostOperations{
             createPost(post);
             return;
         }
-        removePost(post);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -449,21 +466,18 @@ public class PostService implements PostOperations{
         //createPostReplies(postWithReply);
         editPostReplies(postWithReply);
         //removePostReplies(postWithReply);
-        removePostWithReply(postWithReply); 
     }
 
-    @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    private void removePostWithReply(PostWithReplyJSON postWithReply){
-        if(postWithReply.isCancelled()){
-            try{
-                Post postEntity = getPostEntity((PostJSON)postWithReply);
-                if (postEntity != null && postEntity.getPost_Id()!= 0) {
-                    this.entityManager.remove(postEntity);
-                }
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
+    public void removePostWithReply(PostWithReplyJSON postWithReply){
+        try{
+            Post postEntity = getPostEntity((PostJSON)postWithReply);
+            if (postEntity != null && postEntity.getPost_Id()!= 0) {
+                this.entityManager.remove(postEntity);
             }
-            catch(NoResultException | EJBException ex){
-                return;
-            }
+        }
+        catch(NoResultException | EJBException ex){
+            return;
         }
     }
 
@@ -522,6 +536,15 @@ public class PostService implements PostOperations{
                             new TopicJSON(topicPostEntity.getTopic().getTopic_Id(), null, null, null, null, null), null, null);
     }
 
+    public Set<TopicPostJSON> getTopicPostsByTopic(TopicJSON topic) throws EJBException{
+        Topic topicEntity = topicOperations.getTopicEntity(topic);
+        return topicEntity.getPosts().stream().map(candidate ->{
+                        return getTopicPostInfo(new TopicPostJSON(candidate.getPost_Id(), null, null, 
+                                                        0, 0, null, new TopicJSON(candidate.getTopic_Id(), null, null, null, null, null)
+                                                        , null, null));
+                    }).collect(Collectors.toSet());   
+    }
+
     //@TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public PostJSON getPostInfo(PostJSON post) throws NoResultException{
         Post postInfo = getPostEntity(post);
@@ -532,7 +555,7 @@ public class PostService implements PostOperations{
     }
     
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
-    private void removeTopicPost(TopicPostJSON topicPost){
+    public void removeTopicPost(TopicPostJSON topicPost){
         if(topicPost.isCancelled() == false)
             return;
         try{
@@ -573,9 +596,7 @@ public class PostService implements PostOperations{
                 postEntity = getPostEntity(topicPost);
             }
             createTopicPost(topic, postEntity);
-            
         }
-        removeTopicPost(topicPost);
     }
     
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -605,7 +626,7 @@ public class PostService implements PostOperations{
     }
     
     @TransactionAttribute(TransactionAttributeType.MANDATORY)
-    private void removePost(PostJSON post) {
+    public void removePost(PostJSON post) {
         if (post.isCancelled()) {
             try{
                 Post postEntity = getPostEntity(post);

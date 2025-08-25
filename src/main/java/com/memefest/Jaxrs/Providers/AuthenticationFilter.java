@@ -45,7 +45,8 @@ public class AuthenticationFilter implements ContainerRequestFilter {
       .isAnnotationPresent(PermitAll.class))
       return; 
     if (!isAuthenticated(requestContext))
-      throw new AuthenticationDenied("Authentication required"); 
+      throw new AuthenticationDenied("Authentication required");
+      requestContext.setSecurityContext(new JaxrsSecurityContext(secContext.getCallerPrincipal(), true, "BASIC/JWT"));
   }
   
   private void performAuthorization(String[] roles) {
@@ -53,8 +54,9 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     if(status != AuthenticationStatus.SUCCESS)
       throw new AuthenticationDenied("Authentication failed"); 
     for (int i = 0; i < roles.length; i++) {
-      if (this.request.isUserInRole(roles[i]))
+      if (this.request.isUserInRole(roles[i])){
         return; 
+      }
     } 
     throw new AuthenticationDenied("Not enough permission to access resource");
   }

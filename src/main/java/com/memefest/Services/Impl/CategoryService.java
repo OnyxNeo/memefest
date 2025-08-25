@@ -9,7 +9,6 @@ import java.util.stream.Stream;
 
 import com.memefest.DataAccess.Category;
 import com.memefest.DataAccess.CategoryFollower;
-import com.memefest.DataAccess.Event;
 import com.memefest.DataAccess.SubCategory;
 import com.memefest.DataAccess.SubCategoryId;
 import com.memefest.DataAccess.TopicCategory;
@@ -29,7 +28,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceContextType;
-import jakarta.persistence.Query;
+
 
 @Stateless(name = "CategoryService")
 public class CategoryService implements CategoryOperations{
@@ -59,10 +58,6 @@ public class CategoryService implements CategoryOperations{
   public void editCategory(CategoryJSON category){
     if (category == null)
       return; 
-    if (category.isCancelled()) {
-      removeCategory(category);
-      return;
-    } 
     try{
       Category foundCategory = getCategoryEntity(category);
       if (category.getCategoryName() != null)
@@ -168,34 +163,9 @@ public class CategoryService implements CategoryOperations{
     return foundCategory; 
   }
   
-  /* 
-  public MainCategory getMainCategoryEntity(CategoryJSON category) throws NoResultException {
-    MainCategory foundCategory = null;
-    if ((category != null) && category.getCategoryId() != 0 && category.getCategoryId() != 1) {
-      foundCategory = (MainCategory)this.entityManager.find(MainCategory.class, Integer.valueOf(category.getCategoryId()));
-      if (foundCategory != null)
-        return foundCategory;
-    } 
-    Query query = this.entityManager.createNativeQuery("MainCategory.getCategoryByTitle");
-    query.setParameter("title",category.getCategoryName());
-    foundCategory = (MainCategory)query.getSingleResult();
-    return foundCategory;
-  }
-  */
-  
   public void editSubCategory(SubCategoryJSON subCategory){
-    /*MainCategory mainCategory = null;
-    try{
-      mainCategory = getMainCategoryFromCategory(subCategory);
-    }
-    catch(NoResultException ex){
-      createMainCategory(subCategory.getMainCategoryJSON());
-      editSubCategory(subCategory);
-    }
-    */
     editCategory(subCategory);
     Category categoryEntity = getCategoryEntity(subCategory);
-
     for(CategoryJSON candidate : subCategory.getParentCategories()){
       Category candidateEntity = null;
       try{
@@ -212,7 +182,11 @@ public class CategoryService implements CategoryOperations{
         createParentCategories(categoryEntity, candidateEntity);
       }
     }
-    for(CategoryJSON candidate : subCategory.getCanceledParentCategories()){
+  }
+
+  public void removeParentCategories(SubCategoryJSON subCategory){
+    Category categoryEntity = getCategoryEntity(subCategory); 
+    for(CategoryJSON candidate : subCategory.getParentCategories()){
       try{
           Category candidateEntity = getCategoryEntity(candidate);
           SubCategory subCatEntity = getSubCategoryEntity(categoryEntity, candidateEntity);
@@ -237,140 +211,6 @@ public class CategoryService implements CategoryOperations{
     subCategoryId.setParent_Id(parentCategory.getCat_Id());
     return entityManager.find(SubCategory.class, subCategoryId);
   }
-/*
-  //throw a custom exception to show object was not created    
-  public void createSubCategory(SubCategoryJSON category) throws NoResultException{
-
-
-
-    
-
- 
-    if (category == null || (category.getCategoryName() == null && category.getCategoryId() == 0))
-      return; 
-    
-    try {
-     Category categoryEntity = getCategoryEntity((CategoryJSON)category);
-      /*
-      if (category.getParentCategories() == null || category.getParentCategories().size() == 0) {
-        Set<CategoryJSON> mainCatList = (Set<CategoryJSON>)category.getParentCategories().stream().filter(candidate -> {
-              try {subCategory = new SubCategory();
-      subCategory.setCat_Name(category.getCategoryName());
-      if (category.getParentCategories() == null || category.getParentCategories().size() == 0) {
-        Set<CategoryJSON> mainCatList = (Set<CategoryJSON>)category.getParentCategories().stream().filter(candidate -> {
-              try {
-                MainCategory mainCategory = getMainCategoryFromCategory(candidate);
-                return (mainCategory != null);
-              } catch (IllegalStateException illex) {
-                return false;
-              } 
-            }).collect(Collectors.toSet());
-        if (mainCatList.size() == 0 || mainCatList.size() > 1)
-          return; 
-        for (CategoryJSON catInst : mainCatList) {
-          MainCategory mainCategory = getMainCategoryFromCategory(catInst);
-          if (mainCategory != null)
-            subCategory.setMainCategory(mainCategory); 
-        } 
-        Set<Category> parentcategories = (Set<Category>)category.getParentCategories().stream().map(candidate -> {
-              try {
-                return getCategoryEntity(candidate);
-              } catch (NoResultException noResEx) {
-                throw new IllegalArgumentException("No Result Found for Category: " + candidate.getCategoryName());
-              } 
-            }).filter(candidate -> (candidate != null)).collect(Collectors.toSet());
-        subCategory.setSubcategories(null); setParentCategories(parentcategories.stream().filter(candidate ->{
-           return (candidate instanceof SubCategory);
-        }).map(candidateEntity ->{
-          try{
-            return entityManager.find(SubCategory.class, candidateEntity.getCat_Id());
-          }
-          catch(NoResultException exp){
-            ex.printStackTrace();
-          }
-          return null;
-        }).collect(Collectors.toSet()));
-      } 
-              } 
-            }).collect(Collectors.toSet());
-        if (mainCatList.size() == 0 || mainCatList.size() > 1)
-          return; 
-        for (CategoryJSON catInst : mainCatList) {
-          try{
-            MainCategory mainCategory = getMainCategoryFromCategory(catInst);
-            SubCategory subCategory = getSubCategoryEntity(catInst);
-
-            mainCategory.setSubcategories();
-            subCat.setMainCategory(mainCategory);
-          catch(NoResultException ex){
-
-          } 
-        } 
-        Set<Category> parentcategories = (Set<Category>)category.getParentCategories().stream().map(candidate -> {
-              try {
-                return getCategoryEntity(candidate);
-              } catch (NoResultException noResEx) {
-                throw new IllegalArgumentException("No Result Found for Category: " + candidate.getCategoryName());
-              } 
-            }).filter(candidate -> (candidate != null)).collect(Collectors.toSet());
-        subCategory.setSubcategories(null); setParentCategories(parentcategories.stream().filter(candidate ->{
-           return (candidate instanceof SubCategory);
-        }).map(candidateEntity ->{
-          try{
-            return entityManager.find(SubCategory.class, candidateEntity.getCat_Id());
-          }
-          catch(NoResultException exp){
-            ex.printStackTrace();
-          }
-          return null;
-        }).collect(Collectors.toSet()));
-      } 
-      this.entityManager.persist(subCategory);   
-    } catch (NoResultException ex) {
-      createCategory(category);
-      
-    }
-    
-  }
-  
-  //throw a custom exception to show object was not created
-  public void editSubCategory(CategoryJSON category) {
-    if (!(category instanceof SubCategoryJSON))
-      return;
-    try{ 
-      SubCategory subCategoryEntity = getSubCategoryEntity(category);
-      if (subCategoryEntity == null)
-        return; 
-      SubCategoryJSON subCategory = (SubCategoryJSON)category;
-      if (category.getCategoryName() != null && !category.getCategoryName().equalsIgnoreCase(subCategoryEntity.getCat_Name()))
-        subCategoryEntity.setCat_Name(category.getCategoryName()); 
-      if (subCategory.getParentCategories() != null && subCategory.getParentCategories().size() > 0) {
-        Set<Category> parentcategories = (Set<Category>)subCategory.getParentCategories().stream().map(candidate -> {
-                                              try {
-                                                return getCategoryEntity(candidate);
-                                              } catch (NoResultException noResEx) {
-                                                throw new IllegalArgumentException("No Result Found for Category: " + candidate.getCategoryName());
-                                              } 
-                                              }).filter(candidate -> (candidate != null)).collect(Collectors.toSet());
-    subCategoryEntity.setParentCategories(parentcategories.stream().filter(candidate ->{
-                                                return (candidate instanceof SubCategory);
-                                             }).map(candidateEntity ->{
-                                               try{
-                                                 return entityManager.find(SubCategory.class, candidateEntity.getCat_Id());
-                                               }
-                                               catch(NoResultException exp){
-                                                 exp.printStackTrace();
-                                               }
-                                               return null;
-                                             }).collect(Collectors.toSet()));
-                                           } 
-      this.entityManager.merge(subCategory);
-    }   
-    catch(NoResultException ex){
-      return;
-    }
-  }
-    */
       
   public SubCategory getSubCategoryEntity(CategoryJSON category, CategoryJSON parent) throws NoResultException{
     SubCategory foundCategory = null;
@@ -386,80 +226,21 @@ public class CategoryService implements CategoryOperations{
     }
     else throw new NoResultException();
   }
-  /* 
-  //throw a custom exception to show object was not created
-  public void createMainCategory(CategoryJSON category) {
-    if (category == null || (category.getCategoryName() == null && category.getCategoryId() == 0))
-      return; 
-    MainCategory newCategory = null;
-    try {
-      Category categoryEntity = getCategoryEntity(category);
-      if (categoryEntity != null) {
-        newCategory = (MainCategory)this.entityManager.find(MainCategory.class, Integer.valueOf(categoryEntity.getCat_Id()));
-        if (newCategory == null)
-          createCategory(category);
-        else
-        editCategory(category);
-        this.entityManager.persist(newCategory);
-      } 
-    } catch (NoResultException ex) {
-      return;
-    } 
-  }
-      
-  //throw a custom exception to show object was not created
-  public void editMainCategory(CategoryJSON category) {
-    if (category instanceof SubCategoryJSON)
-      return; 
-    
-    try{
-      MainCategory mainCategoryEntity = getMainCategoryEntity(category);
-      if(mainCategoryEntity.getSubcategories() != null && category.isCancelled()){
-        entityManager.remove(mainCategoryEntity);
-        return;
-      }
-    }
-    catch(NoResultException ex){
-      return;
-    }
-    editCategory(category); 
-  }
-      
-  public MainCategory getMainCategoryFromCategory(CategoryJSON category) throws IllegalStateException {
-    MainCategory mainCategory = null;
-    try {
-      mainCategory = getMainCategoryEntity(category);
-      return mainCategory;
-    } catch (NoResultException ex) {
-      if (!(category instanceof SubCategoryJSON))
-        return null; 
-      for (CategoryJSON candidate : ((SubCategoryJSON)category).getParentCategories()) {
-        MainCategory newMainCategory = getMainCategoryFromCategory(candidate);
-        if (newMainCategory != null && mainCategory != null)
-          throw new IllegalStateException("Category has more than one parent category"); 
-      } 
-      return null;
-    } 
-  }
-  */
+
   public void removeCategory(CategoryJSON category) {
     if (category == null)
-      return; 
-    if (category.isCancelled()) {
+      return;
+    try{ 
       Category foundCategory = getCategoryEntity(category);
       if (foundCategory.getTopics() != null)
         return; 
       this.entityManager.remove(foundCategory);
+    }
+    catch(NoResultException ex){
+      return;
     } 
   }
-/*  
-  public CategoryJSON getMainCategoryInfo(CategoryJSON mainCat) throws NoResultException {
-    MainCategory mainCategoryEntity = getMainCategoryEntity(mainCat);
-    CategoryJSON mainCategory = new CategoryJSON(mainCategoryEntity.getCat_Id(), mainCategoryEntity.getCat_Name(),
-                                        null, null, null);
-    return mainCategory;
-  }
-*/
+
   public SubCategoryJSON getSubCategoryInfo(SubCategoryJSON category) throws NoResultException{
     CategoryJSON categoryInfo = getCategoryInfo(category);
     Set<CategoryJSON> parentCategories = new HashSet<CategoryJSON>();
@@ -478,13 +259,6 @@ public class CategoryService implements CategoryOperations{
     subCategoryJSON.setCategoryName(categoryInfo.getCategoryName());
     subCategoryJSON.setCategoryId(categoryInfo.getCategoryId()); 
     return subCategoryJSON;
-    /*
-    SubCategory subCatEntity = getSubCategoryEntity(category);
-    return (Set<CategoryJSON>)subCatEntity.getParentCategories().stream().map(candidate -> 
-                new CategoryJSON(candidate.getCat_Id(), candidate.getCat_Name(), null, null, 
-                      null))        
-          .collect(Collectors.toSet());
-    */
   }
     
   public Set<TopicJSON> getCategoryTopics(CategoryJSON category)throws NoResultException, EJBException{
@@ -496,14 +270,6 @@ public class CategoryService implements CategoryOperations{
       return new TopicJSON(candidate.getTopic_Id() , null, null, null, null, null);
     }).collect(Collectors.toSet());
     return topics;
-    /*Category categoryEntity= getCategoryEntity(category);
-    return categoryEntity.getTopics().stream().map(topicEntity ->{
-      TopicJSON topicJson = new TopicJSON(topicEntity.getTopic_Id(), topicEntity.getTitle(), null, null, null, null);
-      topicJson.setTopicId(topicEntity.getTopic_Id());
-      topicJson.setTitle(topicEntity.getTitle());
-      return topicJson;
-    }).collect(Collectors.toSet());
-    */
   }
       
   public CategoryJSON getCategoryInfo(CategoryJSON category) throws NoResultException, EJBException{
@@ -524,6 +290,8 @@ public class CategoryService implements CategoryOperations{
     else if(category.getCategoryName() != null)
       categories = this.entityManager.createNamedQuery("Category.searchByTitle", Category.class).setParameter(1, category.getCategoryName())
                 .getResultList();
+      if(categories == null)
+        throw new NoResultException();
       return categories.stream().map(catEntity -> {
         Set<TopicJSON> catTopics = new HashSet<TopicJSON>();
         Set<UserJSON> followers = new HashSet<UserJSON>();

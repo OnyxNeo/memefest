@@ -17,13 +17,13 @@ import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
-import jakarta.security.enterprise.SecurityContext;
 import jakarta.ws.rs.BeanParam;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
@@ -31,15 +31,15 @@ import org.ehcache.CacheManager;
 @PermitAll
 @RequestScoped
 @Path("SignIn")
-public class UserLoginResource {
+public class UserLoginResource{
   @Inject
   private UserSecurityService userService;
   
   @Inject
   private CacheHelper cacheHelper;
   
-  @Inject
-  private SecurityContext securityContext;
+  @Context
+  private jakarta.ws.rs.core.SecurityContext securityContext;
 
   private ObjectMapper mapper;
 
@@ -192,7 +192,7 @@ public class UserLoginResource {
   @Path("User/ResetPassword")
   @Consumes({"application/json"})
   public Response resetPassword(UserJSON user) {
-    UserSecurityJSON securityDetails = new UserSecurityJSON(null, user.getUserSecurity().getPassword(), null, new UserJSON(0, this.securityContext.getCallerPrincipal().getName()));
+    UserSecurityJSON securityDetails = new UserSecurityJSON(null, user.getUserSecurity().getPassword(), null, new UserJSON(0, this.securityContext.getUserPrincipal().getName()));
     user.setUserSecurity(securityDetails);
     this.userService.setUserPassword(securityDetails);
     return Response.status(200).entity(user).build();
@@ -240,7 +240,9 @@ public class UserLoginResource {
   @GET
   public Response login() {
     try {
-      UserSecurityJSON uSecurityJSON = this.userService.getSecurityDetails(new UserJSON(this.securityContext.getCallerPrincipal().getName()));
+      UserSecurityJSON uSecurityJSON = this.userService
+                                      .getSecurityDetails(
+                                        new UserJSON(this.securityContext.getUserPrincipal().getName()));
       if (uSecurityJSON != null)
         return Response.ok().entity(uSecurityJSON).build(); 
       return Response.status(401).entity("User not signed In").build();

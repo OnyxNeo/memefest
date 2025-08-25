@@ -6,10 +6,7 @@ import java.util.Set;
 
 import com.memefest.DataAccess.Event;
 import com.memefest.DataAccess.JSON.EventJSON;
-import com.memefest.DataAccess.JSON.TopicJSON;
-
 import jakarta.persistence.NoResultException;
-import jakarta.websocket.Session;
 
 public interface EventOperations {
     
@@ -29,6 +26,7 @@ public interface EventOperations {
     public void removeEvent(EventJSON eventInfo);
 
     //public Set<EventJSON> getEventsByUser(UserJSON user);
+
 
     public EventJSON getEventInfo(EventJSON event);
 

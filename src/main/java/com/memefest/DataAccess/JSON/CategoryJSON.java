@@ -28,11 +28,10 @@ public class CategoryJSON {
     @JsonProperty("FollowedBy")
     private Set<UserJSON> followedBy;
 
-    @JsonProperty("Cancel")
-    private boolean canceled;
-
     @JsonProperty("CancelFollowedBy")
     private Set<UserJSON> canceledFollowedBy;
+
+    public CategoryJSON(){}
 
     @JsonCreator
     public CategoryJSON(@JsonProperty("CatId") int categoryId, @JsonProperty("CatName") String categoryName,
@@ -42,7 +41,6 @@ public class CategoryJSON {
         this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.topics = topics;
-        this.canceled = false;
     }
 
     @JsonProperty("CatId")
@@ -79,17 +77,7 @@ public class CategoryJSON {
     public Set<UserJSON> getFollowedBy() {
         return followedBy;
     }
-
-    @JsonProperty("Cancel")
-    public boolean isCancelled() {
-        return canceled;
-    }
-
-    @JsonProperty("Cancel")
-    public void setCanceled(boolean canceled) {
-        this.canceled = canceled;
-    }
-
+    
     @JsonProperty("FollowedBy")
     public void setFollowedBy(Set<UserJSON> followedBy) {
         this.followedBy = followedBy;

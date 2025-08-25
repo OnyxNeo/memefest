@@ -10,10 +10,16 @@ public interface UserOperations {
   
   UserJSON getUserInfo(UserJSON paramUserJSON);
 
+  Set<UserJSON> getAllUsers();
+
   public Set<UserJSON> getFollowers(UserJSON user);
 
   public Set<UserJSON> getFollowing(UserJSON user);
 
+  public void addFollower(UserJSON user, UserJSON follower);
+
+  public void removeFollower(UserJSON user, UserJSON follower);
+  
   public void editUser(UserJSON user);
 
   public User getUserEntity(UserJSON user);

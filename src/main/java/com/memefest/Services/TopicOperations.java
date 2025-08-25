@@ -3,7 +3,6 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import com.memefest.DataAccess.Topic;
-import com.memefest.DataAccess.JSON.CategoryJSON;
 import com.memefest.DataAccess.JSON.TopicJSON;
 
 import jakarta.ejb.Local;

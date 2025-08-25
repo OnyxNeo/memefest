@@ -14,8 +14,6 @@ import java.util.stream.Stream;
 
 import com.memefest.DataAccess.Category;
 import com.memefest.DataAccess.Post;
-import com.memefest.DataAccess.SubCategory;
-import com.memefest.DataAccess.SubCategoryId;
 import com.memefest.DataAccess.Topic;
 import com.memefest.DataAccess.TopicCategory;
 import com.memefest.DataAccess.TopicCategoryId;
@@ -23,7 +21,6 @@ import com.memefest.DataAccess.TopicFollower;
 import com.memefest.DataAccess.TopicFollowerId;
 import com.memefest.DataAccess.User;
 import com.memefest.DataAccess.JSON.CategoryJSON;
-import com.memefest.DataAccess.JSON.EventJSON;
 import com.memefest.DataAccess.JSON.PostJSON;
 import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.DataAccess.JSON.TopicPostJSON;
@@ -37,7 +34,6 @@ import com.memefest.Services.UserOperations;
 import jakarta.annotation.Resource;
 import jakarta.annotation.sql.DataSourceDefinition;
 import jakarta.ejb.EJB;
-import jakarta.ejb.EJBException;
 import jakarta.ejb.ScheduleExpression;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.Timeout;
@@ -48,7 +44,6 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.PersistenceContextType;
-import jakarta.persistence.Query;
 
 
 @DataSourceDefinition(
