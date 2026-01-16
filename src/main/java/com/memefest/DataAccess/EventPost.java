@@ -1,15 +1,11 @@
 package com.memefest.DataAccess;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @NamedQueries(
@@ -31,15 +27,15 @@ public class EventPost{
   @JoinColumn(name ="Event_Id")
   private Event event;
   
-  public int getPost_Id() {
+  public Long getPost_Id() {
     return this.eventPostId.getPost_Id();
   }
 
-  public void setPost_Id(int postId){
+  public void setPost_Id(Long postId){
     this.eventPostId.setPost_Id(postId);
   }
   
-  public void setEvent_Id(int imgId) {
+  public void setEvent_Id(Long imgId) {
     this.eventPostId.setEvent_Id(imgId);
   }
 

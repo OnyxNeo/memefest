@@ -1,14 +1,12 @@
 package com.memefest.DataAccess;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @NamedQueries({
@@ -34,19 +32,19 @@ public class EventCategory {
   @JoinColumn(name= "Cat_Id", referencedColumnName ="Cat_Id")
   private Category category;
   
-  public int getEvent_Id() {
+  public Long getEvent_Id() {
     return this.eventCatId.getEvent_Id();
   }
 
-  public void setEvent_Id(int eventId){
+  public void setEvent_Id(Long eventId){
     this.eventCatId.setEvent_Id(eventId);
   }
   
-  public void setCat_Id(int catId) {
+  public void setCat_Id(Long catId) {
     this.eventCatId.setCat_Id(catId);
   }
 
-  public int getCat_Id(){
+  public Long getCat_Id(){
     return this.eventCatId.getCat_Id();
   }
 

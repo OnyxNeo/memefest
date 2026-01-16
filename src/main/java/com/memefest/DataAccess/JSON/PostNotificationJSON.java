@@ -13,7 +13,7 @@ public class PostNotificationJSON extends NotificationJSON{
     private PostJSON post;
 
     @JsonCreator
-    public PostNotificationJSON(@JsonProperty("NotificationID") int notId,
+    public PostNotificationJSON(@JsonProperty("NotificationID") Long notId,
                                     @JsonProperty("Post") PostJSON postJSON,
                                         @JsonProperty("TimeStamp") LocalDateTime time,
                                             @JsonProperty("User") UserJSON user,

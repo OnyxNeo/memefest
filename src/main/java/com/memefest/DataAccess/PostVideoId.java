@@ -6,24 +6,24 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class PostVideoId {
   @Column(name = "Vid_Id", nullable = false, updatable = false, insertable = false)
-  private int vidId;
+  private Long vidId;
   
   @Column(name = "Post_Id", nullable = false, updatable = false, insertable = false)
-  private int postId;
+  private Long postId;
   
-  public int getVid_Id() {
+  public Long getVid_Id() {
     return this.vidId;
   }
   
-  public void setVid_Id(int imgId) {
+  public void setVid_Id(Long imgId) {
     this.vidId = imgId;
   }
   
-  public int getPost_Id() {
+  public Long getPost_Id() {
     return this.postId;
   }
   
-  public void setPost_Id(int postId) {
+  public void setPost_Id(Long postId) {
     this.postId = postId;
   }
 }

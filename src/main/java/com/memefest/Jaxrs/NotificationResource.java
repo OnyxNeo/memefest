@@ -16,12 +16,12 @@ public class NotificationResource extends Resource{
     @Inject
     protected NotificationOperations notOps;
 
-    @Path("/Event")
+    @Path("Event")
     public EventNotificationSubResource eventNotificationSubResource(){
         return new EventNotificationSubResource(notOps);
     }
 
-    @Path("/Follow/Topic")
+    @Path("Follow/Topic")
     public TopicFollowNotificationSubResource topicFollowNotificationSubResource(){
         return new TopicFollowNotificationSubResource(notOps);        
     }

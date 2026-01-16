@@ -11,7 +11,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 public class VideoJSON {
     
     @JsonProperty("ClipID")
-    private int vidId;
+    private Long vidId;
 
     @JsonProperty("ClipPath")
     private String vidPath;
@@ -23,7 +23,7 @@ public class VideoJSON {
     private boolean isCanceled;
 
     @JsonCreator
-    public VideoJSON(@JsonProperty("ClipID") int vidId,
+    public VideoJSON(@JsonProperty("ClipID") Long vidId,
                         @JsonProperty("ClipPath") String vidPath, 
                             @JsonProperty("ClipTitle") String title) {
         this.vidId = vidId;
@@ -32,11 +32,11 @@ public class VideoJSON {
         this.isCanceled = false;
     }
 
-    public int getVidId() {
+    public Long getVidId() {
         return vidId;
     }
 
-    public void setVidId(int vidId) {
+    public void setVidId(Long vidId) {
         this.vidId = vidId;
     }
 

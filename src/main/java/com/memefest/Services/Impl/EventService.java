@@ -26,13 +26,15 @@ import com.memefest.DataAccess.JSON.ImageJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.DataAccess.JSON.VideoJSON;
 import com.memefest.Services.CategoryOperations;
+import com.memefest.Services.DataSourceOps;
 import com.memefest.Services.EventOperations;
-import com.memefest.Services.FeedsOperations;
 import com.memefest.Services.ImageOperations;
 import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.PostOperations;
 import com.memefest.Services.UserOperations;
 import com.memefest.Services.VideoOperations;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
@@ -47,18 +49,16 @@ import jakarta.ejb.TransactionAttributeType;
 import jakarta.ejb.TransactionManagement;
 import jakarta.ejb.TransactionManagementType;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceContextType;
+import jakarta.transaction.TransactionScoped;
 
 
 @TransactionManagement(TransactionManagementType.CONTAINER)
 //add event Categories in next iteration
 @Stateless(name = "EventService")
 public class EventService implements EventOperations{
-    
-    @EJB
-    private FeedsOperations feedEndPointService;
+
 
     @EJB
     private UserOperations userOperations;
@@ -81,10 +81,130 @@ public class EventService implements EventOperations{
     @Resource
     private TimerService timerService;
 
-    @PersistenceContext(unitName = "memeFest", type = PersistenceContextType.TRANSACTION)
+    @EJB
+    private DataSourceOps datasourceOps;
+
+    private EntityManagerFactory factory;
+
+    @TransactionScoped
     private EntityManager entityManager;
 
-    
+
+    @PostConstruct
+    public void init(){
+        /*String databaseName = "Memefest";
+        String serverName = "CHHUMBUCKET";
+        //String instanceName = "CHHUMBUCKET";
+        String username = "Neutron";
+        String password = "ScoobyDoo24";
+        String encrypt = "false";
+        int portNumber = 1433;
+        boolean trustServerCertificate = true;
+
+        String dataSourceName = "DataSource/EventService";
+        String unitName = "EventServicePersistenceUnit";  
+        
+        SQLServerDataSource ssDataSource = new SQLServerDataSource();
+        ssDataSource.setDatabaseName(databaseName);
+        ssDataSource.setTrustServerCertificate(trustServerCertificate);
+        ssDataSource.setServerName(serverName);
+        //ssDataSource.setInstanceName(instanceName);
+        ssDataSource.setUser(username);
+        ssDataSource.setPassword(password);
+        ssDataSource.setPortNumber(portNumber);
+        ssDataSource.setEncrypt(encrypt);
+        try{
+            Context context = new InitialContext();   
+            try {
+
+                context.rebind(dataSourceName, (DataSource) ssDataSource);
+            }catch (NamingException e) {
+                try {
+                    context.bind(dataSourceName,(DataSource) ssDataSource);
+                //ssDataSource = (DataSource) context.lookup("DataSource/Memefest");
+                } catch (NamingException ec) {
+                    throw new RuntimeException(ec);
+                }
+            }
+        }catch(NamingException ex){
+            throw new RuntimeException(ex);
+        }
+            Map<String, Object> memeProps = new HashMap<>();
+            memeProps.put(PersistenceUnitProperties.TRANSACTION_TYPE, PersistenceUnitTransactionType.JTA.name());
+            memeProps.put(PersistenceUnitProperties.TARGET_SERVER, TargetServer.None);
+            memeProps.put(PersistenceUnitProperties.JDBC_USER, username);
+            memeProps.put(PersistenceUnitProperties.JDBC_PASSWORD, password);
+            //memeProps.put(PersistenceUnitProperties.CONNECTION_POOL_JTA_DATA_SOURCE, "DataSource/Memefest");
+            memeProps.put(PersistenceUnitProperties.JTA_DATASOURCE, dataSourceName);
+            memeProps.put(PersistenceUnitProperties.ECLIPSELINK_PERSISTENCE_UNITS, unitName);
+            memeProps.put(PersistenceUnitProperties.JDBC_DRIVER, "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            PersistenceProvider provider = new PersistenceProvider();
+
+            org.eclipse.persistence.jpa.config.PersistenceUnit unit = new PersistenceUnitImpl(unitName);
+            unit.setProvider("org.eclipse.persistence.jpa.PersistenceProvider");
+        //unit.setJtaDataSource("DataSource/Memefest" );
+
+        unit.setClass("com.memefest.DataAccess.UserSecurity");
+        unit.setClass("com.memefest.DataAccess.CategoryFollower");
+        unit.setClass("com.memefest.DataAccess.Category");
+        unit.setClass("com.memefest.DataAccess.Event");
+        unit.setClass("com.memefest.DataAccess.EventCategory");
+        unit.setClass("com.memefest.DataAccess.EventImage");
+        unit.setClass("com.memefest.DataAccess.EventNotification");
+        unit.setClass("com.memefest.DataAccess.EventPost");
+        unit.setClass("com.memefest.DataAccess.EventPostNotification");
+        unit.setClass("com.memefest.DataAccess.EventVideo");
+        unit.setClass("com.memefest.DataAccess.FollowNotification");
+        unit.setClass("com.memefest.DataAccess.Image");
+        unit.setClass("com.memefest.DataAccess.Post");
+        unit.setClass("com.memefest.DataAccess.PostCategory");
+        unit.setClass("com.memefest.DataAccess.PostImage");
+        unit.setClass("com.memefest.DataAccess.PostNotification");
+        unit.setClass("com.memefest.DataAccess.PostReply");
+        unit.setClass("com.memefest.DataAccess.PostVideo");
+        unit.setClass("com.memefest.DataAccess.JokeOfDay");
+        unit.setClass("com.memefest.DataAccess.Sponsor");
+        unit.setClass("com.memefest.DataAccess.JokeOfDayPost");
+        unit.setClass("com.memefest.DataAccess.PostTaggedUser");
+        unit.setClass("com.memefest.DataAccess.RepostTaggedUser");
+        unit.setClass("com.memefest.DataAccess.Interact");
+        unit.setClass("com.memefest.DataAccess.Repost");
+        unit.setClass("com.memefest.DataAccess.SubCategory");
+        unit.setClass("com.memefest.DataAccess.Topic");
+        unit.setClass("com.memefest.DataAccess.TopicCategory");
+        unit.setClass("com.memefest.DataAccess.TopicFollower");
+        unit.setClass("com.memefest.DataAccess.TopicFollowNotification");
+        unit.setClass("com.memefest.DataAccess.TopicImage");
+        unit.setClass("com.memefest.DataAccess.TopicPost");
+        unit.setClass("com.memefest.DataAccess.TopicPostNotification");
+        unit.setClass("com.memefest.DataAccess.TopicVideo");
+        unit.setClass("com.memefest.DataAccess.User");
+        unit.setClass("com.memefest.DataAccess.UserAdmin");
+        unit.setClass("com.memefest.DataAccess.UserFollower");
+        unit.setClass("com.memefest.DataAccess.Video");
+
+        unit.setExcludeUnlistedClasses(false);
+        //unit.setName("Memefest");
+        unit.setTransactionType(PersistenceUnitTransactionType.JTA);     
+        unit.setName(unitName);
+        unit.setJtaDataSource(dataSourceName);
+        //PersistenceProvider provider = new PersistenceProvider();
+        //persistenceUnit.setExcludeUnlistedClasses(false);
+        //persistenceUnit.getPersistenceUnitInfo().
+        this.factory = provider.createContainerEntityManagerFactory(unit.getPersistenceUnitInfo(), memeProps);
+        //EntityManagerFactoryWrapper wrapper = new EntityManagerFactoryWrapper(factory
+        */
+        this.entityManager = datasourceOps.getEntityManagerFactory().createEntityManager();;
+            //entityManager.joinTransaction();
+      
+    }
+
+    @PreDestroy
+    public void destroy(){
+        factory.close();
+        entityManager.close();
+    }  
+
     public void createScheduledEvent(EventJSON eventInfo, LocalDateTime dueDate){
         ScheduleExpression schedule = new ScheduleExpression().year(dueDate.getYear()).dayOfMonth(dueDate.getDayOfMonth())
                                         .hour(dueDate.getHour()).minute(dueDate.getMinute());
@@ -151,11 +271,11 @@ public class EventService implements EventOperations{
     }
 
     private Set<CategoryJSON> getCategories(EventJSON event){
-        if(event == null || event.getEventID() == 0)
+        if(event == null || event.getEventID() == null)
             return null;
         try{
             return entityManager.createNamedQuery("EventCategory.findByEventId", Category.class)
-                                    .setParameter(1, event.getEventID()).getResultList().stream().map(category ->{
+                                    .setParameter("eventId", event.getEventID()).getResultList().stream().map(category ->{
                                         return new CategoryJSON(category.getCat_Id(), category.getCat_Name(), null, null, null);
                                     }).collect(Collectors.toSet());
         }
@@ -168,7 +288,7 @@ public class EventService implements EventOperations{
         timerService.getTimers().stream().filter(timer ->{
             if(timer.getInfo() instanceof EventJSON){
                 EventJSON timerInfo = (EventJSON) timer.getInfo();
-                if(timerInfo.getEventID() == eventInfo.getEventID() || timerInfo.getEventTitle().equalsIgnoreCase(eventInfo.getEventTitle())){
+                if(timerInfo.getEventID().equals(eventInfo.getEventID()) || timerInfo.getEventTitle().equalsIgnoreCase(eventInfo.getEventTitle())){
                     return true;
                 }
                 return false;
@@ -182,7 +302,7 @@ public class EventService implements EventOperations{
         for(Timer timer : timerService.getAllTimers()){
             if(timer.getInfo()instanceof EventJSON){
                 EventJSON timerInfo = (EventJSON) timer.getInfo();
-                if(timerInfo.getEventID() == event.getEventID() || timerInfo.getEventTitle().equalsIgnoreCase(event.getEventTitle())){
+                if(timerInfo.getEventID().equals(event.getEventID()) || timerInfo.getEventTitle().equalsIgnoreCase(event.getEventTitle())){
                     ScheduleExpression schedule = timer.getSchedule();
                     LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(schedule.getYear()), 
                                             Integer.parseInt(schedule.getMonth()), 
@@ -232,7 +352,7 @@ public class EventService implements EventOperations{
     }
     */
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    //@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //throw a custom exception to show object was not created
     //add logic to run as specified principals for changing some properties for events
     public void editEvent(EventJSON event){
@@ -278,11 +398,13 @@ public class EventService implements EventOperations{
     public EventJSON getEventInfo(EventJSON event)throws NoResultException{
         Event eventEntity = getEventEntity(event);
         Set<CategoryJSON> categories = getCategories(event);
-        User user = userOperations.getUserEntity(event.getPostedBy());
-        UserJSON postedBy = new UserJSON(user.getUserId(), user.getUsername());
+        //User user = userOperations.getUserEntity(event.getPostedBy());
+        UserJSON postedBy = new UserJSON(eventEntity.getPosted_By(), null, null, 0, 
+                        false, null, null, null,
+                             null, null, null);
         LocalDateTime eventDate = LocalDateTime.ofInstant(eventEntity.getEvent_Date().toInstant(), ZoneId.systemDefault());
         LocalDateTime datePosted = LocalDateTime.ofInstant(eventEntity.getDate_Posted().toInstant(), ZoneId.systemDefault());
-        int eventId = eventEntity.getEvent_Id();
+        Long eventId = eventEntity.getEvent_Id();
         String eventPin = eventEntity.getEvent_Pin();
         String eventTitle = eventEntity.getEvent_Title();
         String eventDesc = eventEntity.getEvent_Description();
@@ -298,7 +420,7 @@ public class EventService implements EventOperations{
                 return new EventPostJSON(postInst.getPost_Id(), null, null, 
                         0, 0, null, new EventJSON(postInst.getEvent().getEvent_Id(),
                              null, null, null,null,null,null, 
-                                null, null,null, null,null, null,null,null), null,null);
+                                null, null,null, null,null, null,null,null, 0), null,null, null);
             }).collect(Collectors.toSet());
         Set<VideoJSON> eventVideo = new HashSet<VideoJSON>();
         /* 
@@ -308,13 +430,13 @@ public class EventService implements EventOperations{
             }).collect(Collectors.toSet());
         */
         EventJSON eventJSON = new EventJSON(eventId, eventTitle, eventDesc, eventPin,eventDate,datePosted,eventVideo, eventImages,
-                                        posts,null, null, eventVenue,postedBy, categories, null); 
+                                        posts,null, null, eventVenue,postedBy, categories, null, 0); 
         return eventJSON;
     }   
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Event getEventEntity(EventJSON event) throws NoResultException{
-        if(event == null || event.getEventTitle()== null && event.getEventID() == 0)
+        if(event == null || event.getEventTitle()== null && event.getEventID() == null)
             throw new NoResultException();
         /*if(event.getEventID() != 0){
             Event eventEntity = this.entityManager.find(Event.class, event.getEventID());
@@ -331,14 +453,14 @@ public class EventService implements EventOperations{
             throw new NoResultException();
         */
         Event foundEvent = null;
-        if(event.getEventID() != 0) {
+        if(event.getEventID() != null) {
             foundEvent = (Event)this.entityManager.find(Event.class, event.getEventID());
             if (foundEvent == null){
                 throw new NoResultException();
             }
             return foundEvent;          
         }
-        else if(event.getEventTitle() != null && event.getEventID() == 0){   
+        else if(event.getEventTitle() != null && event.getEventID() == null){   
             foundEvent = (Event) this.entityManager.createNamedQuery("Event.getEventByTitle", Event.class)
                                 .setParameter(1,event.getEventTitle()).getSingleResult();
             return foundEvent; 
@@ -346,7 +468,7 @@ public class EventService implements EventOperations{
         else throw new NoResultException();
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    //@TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //throw a custom exception to show object was not created
     private void createEvent(EventJSON event)
      {
@@ -395,43 +517,45 @@ public class EventService implements EventOperations{
         if(event == null){
             events = this.entityManager.createNamedQuery("Event.getAll", Event.class).getResultList();
         }
-        else if(event.getEventTitle() != null && (event.getPostedBy()==null || (event.getPostedBy() != null && event.getPostedBy().getUsername() == null && event.getPostedBy().getUserId() == 0)))
+        else if(event.getEventTitle() != null && (event.getPostedBy()== null || (event.getPostedBy() != null && event.getPostedBy().getUsername() == null 
+                                && event.getPostedBy().getUserId() == null)))
             events = this.entityManager.createNamedQuery("Event.searchByTitle", Event.class).setParameter(1, event.getEventTitle())
                 .getResultList();
-        else if(event.getPostedBy() != null && event.getPostedBy().getUserId() != 0 && event.getEventVenue() == null && event.getEventTitle() == null)
+        else if(event.getPostedBy() != null && event.getPostedBy().getUserId() != null && event.getEventVenue() == null && event.getEventTitle() == null)
             events = this.entityManager.createNamedQuery("Event.searchByPostedBy", Event.class).setParameter(1, event.getPostedBy().getUserId())
                 .getResultList();
-        else if(event.getPostedBy() != null && event.getPostedBy().getUserId() == 0 && event.getPostedBy().getUsername() != null && event.getEventVenue() == null){
+        else if(event.getPostedBy() != null && event.getPostedBy().getUserId() == null && event.getPostedBy().getUsername() != null && event.getEventVenue() == null){
             User owner = userOperations.getUserEntity(new UserJSON(event.getPostedBy().getUsername()));
             events = this.entityManager.createNamedQuery("Event.searchByPostedBy", Event.class).setParameter(1, owner.getUserId())
                 .getResultList();
         }
-        else if(event.getEventVenue() != null && (event.getPostedBy()!= null && event.getPostedBy().getUsername() == null && event.getPostedBy().getUserId() == 0 || event.getPostedBy() == null) && event.getEventTitle() == null)
+        else if(event.getEventVenue() != null && (event.getPostedBy()!= null && event.getPostedBy().getUsername() == null && event.getPostedBy().getUserId() == null ||
+                                     event.getPostedBy() == null) && event.getEventTitle() == null)
              events = this.entityManager.createNamedQuery("Event.searchByVenue", Event.class).setParameter(1, event.getEventVenue())
                 .getResultList();
-        else if(event.getEventVenue() != null && event.getEventTitle() != null && (event.getPostedBy() != null &&  event.getPostedBy().getUsername() == null && event.getPostedBy().getUserId()== 0|| event.getPostedBy() == null)) 
+        else if(event.getEventVenue() != null && event.getEventTitle() != null && (event.getPostedBy() != null &&  event.getPostedBy().getUsername() == null && event.getPostedBy().getUserId() == null|| event.getPostedBy() == null)) 
             events = this.entityManager.createNamedQuery("Event.searchByVenue&Title", Event.class)
                 .setParameter(1, event.getEventVenue())
                 .setParameter(2, event.getEventTitle())
                 .getResultList();
-        else if(event.getEventVenue() != null && (event.getPostedBy() != null && event.getPostedBy().getUserId() != 0) && event.getEventTitle() == null)
+        else if(event.getEventVenue() != null && (event.getPostedBy() != null && event.getPostedBy().getUserId() != null) && event.getEventTitle() == null)
             events = this.entityManager.createNamedQuery("Event.searchByVenue&PostedBy", Event.class)
                 .setParameter(1, event.getEventVenue())
                 .setParameter(2, event.getPostedBy().getUserId())
                 .getResultList();
-        else if(event.getEventVenue() != null && event.getPostedBy() != null && event.getPostedBy().getUserId() == 0 && event.getPostedBy().getUsername() != null && event.getEventTitle() == null){
+        else if(event.getEventVenue() != null && event.getPostedBy() != null && event.getPostedBy().getUserId() == null && event.getPostedBy().getUsername() != null && event.getEventTitle() == null){
             User owner = userOperations.getUserEntity(new UserJSON(event.getPostedBy().getUsername()));
             events = this.entityManager.createNamedQuery("Event.searchByVenue&PostedBy", Event.class)
                 .setParameter(1, event.getEventVenue())
                 .setParameter(2, owner.getUserId())
                 .getResultList();
         }
-        else if(event.getPostedBy()!= null && event.getPostedBy().getUserId() != 0 && event.getEventTitle() != null)
+        else if(event.getPostedBy()!= null && event.getPostedBy().getUserId() != null && event.getEventTitle() != null)
             events = this.entityManager.createNamedQuery("Event.searchByPostedBy&Title", Event.class)
                 .setParameter(2, event.getPostedBy().getUserId())
                 .setParameter(1, event.getEventTitle())
                 .getResultList();
-        else if(event.getPostedBy() != null && event.getPostedBy().getUserId() == 0 && event.getPostedBy().getUsername() != null && event.getEventTitle() != null){
+        else if(event.getPostedBy() != null && event.getPostedBy().getUserId() == null && event.getPostedBy().getUsername() != null && event.getEventTitle() != null){
             User owner = userOperations.getUserEntity(new UserJSON(event.getPostedBy().getUsername()));
             events = this.entityManager.createNamedQuery("Event.searchByPostedBy&Title", Event.class)
                 .setParameter(2, owner.getUserId())
@@ -442,13 +566,14 @@ public class EventService implements EventOperations{
             return Collections.singleton(getEventInfo(event));
 
         return events.stream().map(eventEntity ->{
-            Set<CategoryJSON> categories = getCategories(new EventJSON(event.getEventID(), null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+            Set<CategoryJSON> categories = getCategories(new EventJSON(eventEntity.getEvent_Id(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0));
 
-            UserJSON postedBy = userOperations.getUserInfo(new UserJSON(eventEntity.getPosted_By(),null));
+            UserJSON postedBy = userOperations.getUserInfo(new UserJSON(eventEntity.getPosted_By(), null, null, 0,
+                                                                false, null, null, null, null, null, null));
             //UserJSON postedBy = new UserJSON(eventEntity.getPosted_By(), postedByEntity.getUsername());
             LocalDateTime eventDate = LocalDateTime.ofInstant(eventEntity.getEvent_Date().toInstant(), ZoneId.systemDefault());
             LocalDateTime datePosted = LocalDateTime.ofInstant(eventEntity.getDate_Posted().toInstant(), ZoneId.systemDefault());
-            int eventId = eventEntity.getEvent_Id();
+            Long eventId = eventEntity.getEvent_Id();
             String eventPin = eventEntity.getEvent_Pin();
             String eventTitle = eventEntity.getEvent_Title();
             String eventDesc = eventEntity.getEvent_Description();
@@ -464,7 +589,7 @@ public class EventService implements EventOperations{
                     return new EventPostJSON(postInst.getPost_Id(), null, null, 
                             0, 0, null, new EventJSON(postInst.getEvent().getEvent_Id(),
                                  null, null, null,null,null,null, 
-                                    null, null,null, null,null, null,null, null), null, null);
+                                    null, null,null, null,null, null,null, null, 0), null, null,null);
                 }).collect(Collectors.toSet());
             Set<VideoJSON> eventVideo = new HashSet<VideoJSON>();
         /* 
@@ -475,7 +600,7 @@ public class EventService implements EventOperations{
         */
 
         return new EventJSON(eventId, eventTitle, eventDesc, eventPin,eventDate,datePosted,eventVideo, eventImages,
-                                        posts,null, null, eventVenue,postedBy, categories, null);
+                                        posts,null, null, eventVenue,postedBy, categories, null, 0);
         }).collect(Collectors.toSet());  
     }
 

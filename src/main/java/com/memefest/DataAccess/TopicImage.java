@@ -1,14 +1,12 @@
 package com.memefest.DataAccess;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @NamedQueries({
@@ -27,22 +25,22 @@ public class TopicImage{
   private TopicImageId topicImgId = new TopicImageId();
 
   @ManyToOne(cascade = {CascadeType.PERSIST})
-  @JoinColumn(name = "Topic_Id", referencedColumnName = "Topic_Id")
+  @JoinColumn(name = "Topic_Id")
   private Topic topic;
 
-  @OneToOne(cascade = {CascadeType.MERGE})
-  @JoinColumn(name= "Poster_Id", referencedColumnName ="Img_Id")
+  @ManyToOne(cascade = {CascadeType.MERGE})
+  @JoinColumn(name= "Poster_Id")
   private Image image;
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.topicImgId.getTopic_Id();
   }
 
-  public void setTopic_Id(int topicId){
+  public void setTopic_Id(Long topicId){
     this.topicImgId.setTopic_Id(topicId);
   }
   
-  public void setPoster_Id(int imgId) {
+  public void setPoster_Id(Long imgId) {
     this.topicImgId.setPoster_Id(imgId);
   }
 

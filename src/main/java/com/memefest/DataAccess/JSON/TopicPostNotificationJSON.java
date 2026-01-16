@@ -13,7 +13,7 @@ public class TopicPostNotificationJSON extends PostNotificationJSON{
     private TopicPostJSON topicPost;
 
     @JsonCreator
-    public TopicPostNotificationJSON(@JsonProperty("NotificationID") int notId, 
+    public TopicPostNotificationJSON(@JsonProperty("NotificationID") Long notId, 
                                         @JsonProperty("TopicPost") TopicPostJSON topicPost,
                                             @JsonProperty("TimeStamp") LocalDateTime time,
                                                 @JsonProperty("User") UserJSON user,
@@ -30,5 +30,4 @@ public class TopicPostNotificationJSON extends PostNotificationJSON{
         this.topicPost = topicPost;
     }
 
-    
 }

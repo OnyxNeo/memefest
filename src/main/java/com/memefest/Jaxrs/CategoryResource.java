@@ -1,15 +1,10 @@
 package com.memefest.Jaxrs;
 
-import java.util.Iterator;
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ser.FilterProvider;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.memefest.DataAccess.JSON.CategoryJSON;
 import com.memefest.DataAccess.JSON.SubCategoryJSON;
 import com.memefest.Services.CategoryOperations;
@@ -20,7 +15,6 @@ import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
-import jakarta.ws.rs.MatrixParam;
 import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
@@ -29,6 +23,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
+import jakarta.ws.rs.core.Response.ResponseBuilder;
 
 @Path("Category")
 @PermitAll
@@ -46,8 +41,8 @@ public class CategoryResource extends Resource{
     //@RolesAllowed({"User","Admin"})
     @Path("/Search")
     @Produces({"application/json"})
-    public Response searchCategories(@MatrixParam("Name") String name){
-        CategoryJSON category = new CategoryJSON(0, name, null, null, null);   
+    public Response searchCategories(@PathParam("Name") String name){
+        CategoryJSON category = new CategoryJSON(null, name, null, null, null);   
         Set<CategoryJSON> results = catOps.searchCategory(category);
         StringBuilder builder = new StringBuilder("[");
         ListIterator<CategoryJSON> iterator = results.stream().collect(Collectors.toList()).listIterator();
@@ -77,8 +72,8 @@ public class CategoryResource extends Resource{
     //@RolesAllowed({"User","Admin"})
     @Path("/{CatId: \\d+}")
     @Produces({"application/json"})
-    public Response getCategory(@PathParam("CatId") int catId) throws JsonProcessingException{
-        categoryExtendedInfoViewConfig();
+    public Response getCategory(@PathParam("CatId") Long catId) throws JsonProcessingException{
+        categoryExtendedView();
         CategoryJSON catInfo = catOps.getCategoryInfo(
                                     new CategoryJSON(catId, null, 
                                 null, null, null));
@@ -88,7 +83,7 @@ public class CategoryResource extends Resource{
     @DELETE
     @Path("/{CatId: \\d+}")
     //@RolesAllowed({"User", "Admin"})
-    public Response removeCategory(@PathParam("CatId") int catId){
+    public Response removeCategory(@PathParam("CatId") Long catId){
         catOps.removeCategory(new CategoryJSON(catId, null, null, null, null));
         return Response.ok().build();
     }
@@ -99,7 +94,6 @@ public class CategoryResource extends Resource{
     @Produces({"application/json"})
     public Response setCategory(String cat) throws JsonProcessingException{
         CategoryJSON category= mapper.readValue(cat, CategoryJSON.class);
-        categoryPublicViewConfig();
         catOps.editCategory(category);
         CategoryJSON catInfo = catOps.getCategoryInfo(category);
         return Response.ok().entity(mapper.writeValueAsString(catInfo)).build(); 
@@ -150,19 +144,5 @@ public class CategoryResource extends Resource{
     //@RolesAllowed({"User","Admin"})
     public Response categoryOptions(){
         return Response.ok().build();
-    }
-
-    protected void categoryPublicViewConfig(){
-        Map<String,SimpleBeanPropertyFilter> filters = getPublicViews();
-        FilterProvider provider = setFilters(filters);
-        mapper.setFilterProvider(provider);
-    }
-
-    protected void categoryExtendedInfoViewConfig(){
-        SimpleBeanPropertyFilter extView = SimpleBeanPropertyFilter.serializeAll();
-        Map<String, SimpleBeanPropertyFilter>  filters = getPublicViews();
-        filters.put("CategoryPublicView", extView);
-        FilterProvider provider = setFilters(filters);
-        mapper.setFilterProvider(provider);
     }
 }

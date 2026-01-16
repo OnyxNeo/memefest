@@ -16,7 +16,7 @@ public class UserFollowNotificationJSON extends FollowNotificationJSON{
     private UserJSON user;
 
     @JsonCreator
-    public UserFollowNotificationJSON(@JsonProperty("NotificationID") int notID, 
+    public UserFollowNotificationJSON(@JsonProperty("NotificationID") Long notID, 
                                         @JsonProperty("User") UserJSON user,
                                             @JsonProperty("TimeStamp") LocalDateTime time,
                                                 @JsonProperty("Follower") UserJSON follower,

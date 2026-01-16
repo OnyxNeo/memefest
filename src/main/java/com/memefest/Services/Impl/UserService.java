@@ -6,25 +6,32 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+
+
 import com.memefest.DataAccess.CategoryFollower;
 import com.memefest.DataAccess.Post;
+import com.memefest.DataAccess.PostReply;
 import com.memefest.DataAccess.TopicFollower;
 import com.memefest.DataAccess.User;
-import com.memefest.DataAccess.UserAdmin;
 import com.memefest.DataAccess.UserFollower;
 import com.memefest.DataAccess.UserFollowerId;
 import com.memefest.DataAccess.UserSecurity;
 import com.memefest.DataAccess.JSON.CategoryJSON;
 import com.memefest.DataAccess.JSON.PostJSON;
+import com.memefest.DataAccess.JSON.PostWithReplyJSON;
 import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.DataAccess.JSON.UserSecurityJSON;
-import com.memefest.Services.FeedsOperations;
+import com.memefest.Services.AdminOperations;
+import com.memefest.Services.DataSourceOps;
+import com.memefest.Services.PostOperations;
 import com.memefest.Services.UserOperations;
 import com.memefest.Services.UserSecurityService;
-
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
+import jakarta.ejb.PostActivate;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
@@ -32,47 +39,72 @@ import jakarta.ejb.TransactionManagement;
 import jakarta.ejb.TransactionManagementType;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceContextType;
 import jakarta.persistence.Query;
 import jakarta.persistence.RollbackException;
-/*  
-@DataSourceDefinition(
-  name = "java:app/jndi/memefest/dataSource",
-  portNumber = 1433,
-  serverName = "localhost",
-  user = "Neutron",
-  databaseName = "MemeFest",
-  password = "scoobyDoo24",
-  className = "com.microsoft.sqlserver.jdbc.SQLServerDataSource"
-)
-*/
+  
 //add role based security
-@TransactionManagement(TransactionManagementType.CONTAINER)
+//@TransactionManagement(TransactionManagementType.CONTAINER)
 @Stateless(name = "userservice")
-public class UserService implements UserSecurityService, UserOperations{
-    @PersistenceContext(unitName = "memeFest", type = PersistenceContextType.TRANSACTION)
-    private EntityManager entityManager;
+//@SessionScoped
+@TransactionManagement(TransactionManagementType.CONTAINER)
+public class UserService  implements UserSecurityService, UserOperations, AdminOperations{
 
     @EJB
-    private FeedsOperations feedsOps;
+    private PostOperations postOps;
 
-    public void createUser(User user) {
-        entityManager.persist(user);
+    //@PersistenceUnit(unitName = "userServiceData")
+
+    @EJB
+    private DataSourceOps dataSourceOps;
+
+  //  @Inject
+//    private DataSourceCredentials dataSourceCreds;
+
+    //private EntityManagerFactoryWrapper factoryWrapper;
+
+    //@Resource(name =  "DataSource/Memefest")
+    //private DataSource dataSource;
+
+    //@Resource
+    //private UserTransaction transaction;
+
+    //@PersistenceContext(unitName = "PostServicePersistenceUnit", type = PersistenceContextType.TRANSACTION)
+    //@TransactionScoped
+    private EntityManager entityManager;
+
+    
+    @PostConstruct
+    @PostActivate
+    public void init(){
+        //entityManager = dataSourceOps.getPersistenceContext().getEmf().createEntityManager();
+        //entityManager.setProperty(PersistenceUnitProperties.JDBC_PASSWORD, password);
+        //entityManager.setProperty(PersistenceUnitProperties.JDBC_USER, username);
+        this.entityManager = dataSourceOps.getEntityManagerFactory().createEntityManager();
+
     }
+    
+
+    @PreDestroy
+    public void destroy(){
+        //factory.close();
+        entityManager.close();
+    }  
+
     /* 
     public void createBaseUser(){
-
     }
     */
+
     //needs transactions
     //clean up json objects
-    //prevent redundancies
+    //prevent redundan
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void createUser(String username, String firstName,
                                 //String middleName
                                 String lastName, 
                                     int contacts, String email, boolean verified, String password, String accessToken,
                                         String refreshToken)throws RollbackException{
+        //entityManager.joinTransaction();
         User newUser = new User();
         //entityManager.joinTransaction();
         //newUser.setUserId(0);
@@ -107,12 +139,7 @@ public class UserService implements UserSecurityService, UserOperations{
     }
 
     public void setSecurityDetails(UserSecurityJSON security){
-    /*  
-        User user = entityManager.find(User.class, security.getUser().getUsername());
-        user.getSecurityDetails().setAccessTkn(security.getAccessTkn());
-        user.getSecurityDetails().setRefreshTkn(security.getRefreshTkn());
-        entityManager.merge(user);
-    */
+
         Query query = null;
         if(security.getPassword() != null){
             query = entityManager.createNamedQuery("UserSecurity.updatePassword");
@@ -146,7 +173,7 @@ public class UserService implements UserSecurityService, UserOperations{
 
     public Set<UserJSON> getAllUsers(){
         return getUserEntities().stream().map(candidate ->{
-            return getUserInfo(new UserJSON(candidate.getUserId(), null));
+            return getUserInfo(new UserJSON(candidate.getUserId(), null, null, 0, false, null, null, null, null, null, null));
         }).collect(Collectors.toSet());
     }
 
@@ -154,7 +181,7 @@ public class UserService implements UserSecurityService, UserOperations{
     public UserSecurityJSON getSecurityDetails(UserJSON user){  
         Query query = null; 
         
-        if(user.getUserId() != 0){
+        if(user.getUserId() != null){
             query = entityManager.createNamedQuery("UserSecurity.findByUserId");
             query.setParameter("userId", user.getUserId());
         }
@@ -166,20 +193,16 @@ public class UserService implements UserSecurityService, UserOperations{
             query = entityManager.createNamedQuery("UserSecurity.findByEmail");
             query.setParameter("email", user.getEmail());
         }
-        /* 
-        UserSecurityJSON security = (UserSecurityJSON) query.getSingleResult();
-        UserJSON userDetails = new UserJSON(user.getUserId(), user.getUsername());
-        UserSecurityJSON securityJSON = new UserSecurityJSON(security.getAccessTkn(),security.getPassword(), security.getRefreshTkn(), userDetails);
-        return securityJSON;
-        */
+
 
         try{
             Object[] security = (Object[])  query.getSingleResult();
-            int userId = (int) security[0];
+            Long userId = (Long) security[0];
             String username = (String) security[1];
             String accessTkn = (String) security[3];
             String refreshTkn = (String) security[4];   
-            UserSecurityJSON securityJSON = new UserSecurityJSON(accessTkn, null, refreshTkn, new UserJSON(userId, username));
+            UserSecurityJSON securityJSON = new 
+            UserSecurityJSON(accessTkn, null, refreshTkn, userId, username);
             //UserJSON userDetails = new UserJSON(user.getUserId(), user.getUsername());
             return securityJSON;
         }
@@ -201,19 +224,12 @@ public class UserService implements UserSecurityService, UserOperations{
         }
         else return false;
     }
-    /*
-    public UserJSON getUserDetails(UserJSON user){
-        UserJSON secDetails = getSecurityDetails(user);     
-        user.setUsername(userDetails.getUsername());
-        user.setEmail(userDetails.getEmail());
-        return user;
-    }
-    */
+
 
     //return a no result exception if user does not exist
     public UserJSON getUserDetails(UserJSON user){
         Query query = null;
-        if(user.getUserId()!= 0){
+        if(user.getUserId()!= null){
             query = entityManager.createNamedQuery("UserSecurity.findByEmail");
             query.setParameter("email", user.getEmail());
         }
@@ -222,12 +238,12 @@ public class UserService implements UserSecurityService, UserOperations{
             query.setParameter("username", user.getUsername());
         }
         else if(user.getEmail()!= null){
-            query = entityManager.createNamedQuery("UserSecurity.findBy UserId");
+            query = entityManager.createNamedQuery("UserSecurity.findByUserId");
             query.setParameter("userId", user.getUserId());
         }
         try{
             Object[] userDetails = (Object[]) query.getSingleResult();
-            int userId = (int) userDetails[0];
+            Long userId = (Long) userDetails[0];
             String username = (String) userDetails[1];
             String email = (String) userDetails[2];
             String accessTkn = (String) userDetails[3];
@@ -235,7 +251,7 @@ public class UserService implements UserSecurityService, UserOperations{
             user.setEmail(email);
             user.setUserId(userId);
             user.setUsername(username);
-            user.setUserSecurity(new UserSecurityJSON(accessTkn,null,refreshTkn,new UserJSON(userId,username)));
+            user.setUserSecurity(new UserSecurityJSON(accessTkn, null, refreshTkn, userId, username));
             return user;
         }
         catch(NoResultException ex){
@@ -244,11 +260,14 @@ public class UserService implements UserSecurityService, UserOperations{
     }
     
     public boolean isAdmin(UserJSON user) throws NoResultException{
-        if(user.getUserId() != 0){
+        if(user.getUserId() != null){
             User userDetails = entityManager.find(User.class, user.getUserId());
             if(userDetails!= null){
-                if(userDetails instanceof UserAdmin)
+                if(userDetails.getAdmin() != null)
                     return true;
+                else{
+                    return false;
+                }
             }
         }
         else{
@@ -267,7 +286,7 @@ public class UserService implements UserSecurityService, UserOperations{
     //return a no result exception if user does not exist
     public UserSecurityJSON getUserPassword(UserSecurityJSON userSecurityDetails) throws NoResultException{
         Query query = null;
-        if(userSecurityDetails.getUser().getUserId() == 0 && userSecurityDetails.getUser().getUsername() != null){
+        if(userSecurityDetails.getUser().getUserId() == null && userSecurityDetails.getUser().getUsername() != null){
             query = entityManager.createNamedQuery("UserSecurity.getUserPasswordFromUsername");
             query.setParameter("username", userSecurityDetails.getUser().getUsername());
         }
@@ -278,15 +297,15 @@ public class UserService implements UserSecurityService, UserOperations{
         }
         
         Object[] security = (Object[]) query.getSingleResult();
-        int userId = (int) security[1];
+        Long userId = (Long) security[1];
         String username = (String) security[2];
         String password = (String) security[0];
-        return new UserSecurityJSON(null,password,null, new UserJSON(userId, username));
+        return new UserSecurityJSON(null, password, null, userId, username);
     }
 
     public void setUserPassword(UserSecurityJSON userSecurity){
         Query query = null;
-        if(userSecurity.getUser().getUserId() == 0 && userSecurity.getUser().getUsername()!= null){
+        if(userSecurity.getUser().getUserId() == null && userSecurity.getUser().getUsername()!= null){
             query = entityManager.createNamedQuery("UserSecurity.updatePasswordFromUsername");
             query.setParameter("username", userSecurity.getUser().getUsername());
             query.setParameter("password", userSecurity.getPassword());
@@ -321,7 +340,7 @@ public class UserService implements UserSecurityService, UserOperations{
 
 
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    //@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public UserJSON getUserInfo(UserJSON user) throws NoResultException, EJBException{
         if(user==null)
             throw new NoResultException("User Not Found");
@@ -332,7 +351,8 @@ public class UserService implements UserSecurityService, UserOperations{
         try {
             topicsFollowing = getTopicFollowers(userEntity);
             categoriesFollowing = getCategoryFollowers(userEntity);
-            posts = getUserPosts(userEntity);  
+            posts = getUserPosts(new UserJSON(userEntity.getUserId(), null, null, 0, false, 
+                null, null, null, null, null, null));  
         } catch (NoResultException ex) {
         
         }
@@ -356,30 +376,80 @@ public class UserService implements UserSecurityService, UserOperations{
         return topicsFollowed;
     }
 
-    public Set<PostJSON> getUserPosts(User  user){
-        Set<Post> userPosts = getUserPostEntities(user);
+    public Set<PostJSON> getUserPosts(UserJSON user){
+        User userEntity = getUserEntity(user);
+        Set<Post> userPosts = getUserPostEntities(userEntity);
         Set<PostJSON> postJSONs = new HashSet<PostJSON>();
         if(userPosts == null)
             return null;
         for(Post p : userPosts){
-            postJSONs.add(new PostJSON(p.getPost_Id(), null, null, 0,0,null,null,null));
+            postJSONs.add(new PostJSON(p.getPost_Id(), null, null, 0,
+            0,null,null,null,null));
         }
         return postJSONs;
     }
 
-    public Set<Post> getUserPostEntities(User user){
-        if(user == null)
-            return null;
-        Set<Post> userPosts = null;
-        userPosts = user.getPosts();
-        if(userPosts == null){    
-            List<Post> posts = entityManager.createNamedQuery("Post.findByUserId", Post.class)
-                            .setParameter("userId", user.getUserId()).getResultList();
-            return posts.stream().collect(Collectors.toSet());
+
+    public Set<PostWithReplyJSON> getComments(UserJSON user)throws EJBException{
+        User userEntity = getUserEntity(user);
+        Set<PostWithReplyJSON> parentPosts = new HashSet<PostWithReplyJSON>();
+        Set<PostReply> postReplies = entityManager.createNamedQuery("PostReplyEntity.getRepliesByUserId", PostReply.class)
+                                        .setParameter("userId", userEntity.getUserId()).getResultList()
+                                        .stream().collect(Collectors.toSet());
+        for(PostReply postReply : postReplies) {
+            Set<PostJSON> posts = postReplies.stream()
+                    .filter(candidate ->{
+                        if(candidate.getPost_Info() == postReply.getPost_Info())
+                            return true;
+                        else 
+                            return false;
+                    })
+                    .map(candidate -> {
+                        return postOps.getPostInfo(new PostJSON(candidate.getPost_Id(), null, null, 0, 0,
+                            user, null, null, null));
+                    }).collect(Collectors.toSet());
+            PostJSON parentInfo = postOps.getPostInfo(new PostJSON(postReply.getPost_Info(), null, null, 0,
+                 0, user, null, null, null));
+            
+            PostWithReplyJSON postWithReply = new PostWithReplyJSON(postReply.getPost_Info(), parentInfo.getComment(), 
+                parentInfo.getCreated(),parentInfo.getUpvotes(),0, user, posts, 
+                parentInfo.getCategories(), parentInfo.getCanceledCategories(), parentInfo.getTaggedUsers());
+            postWithReply.setPosts(posts);
+            parentPosts.add(postWithReply);
         }
-        return userPosts;
+        return parentPosts;
     }
 
+
+    private Set<Post> getUserPostEntities(User user){
+        if(user == null)
+            return null;    
+            List<Post> posts = entityManager.createNamedQuery("Post.getByUserId", Post.class)
+                            .setParameter(1, user.getUserId()).getResultList();
+        return posts.stream().collect(Collectors.toSet());
+    }
+
+    public boolean isFollowedByUser(UserJSON user, UserJSON follower){
+        UserFollowerId userFollowerId = new UserFollowerId();
+        User userEntity = getUserEntity(user);
+        User followerEntity = getUserEntity(follower);
+        userFollowerId.setFollowerId(followerEntity.getUserId());
+        userFollowerId.setUserId(userEntity.getUserId()); 
+        UserFollower userFollower = entityManager.find(UserFollower.class, userFollowerId);
+        if(userFollower != null)
+            return true;
+        else
+            return false;
+    }
+
+    public void toggleFollowedBy(UserJSON user, UserJSON follower){
+        if(isFollowedByUser(user, follower)){
+            removeFollower(user, follower);
+        }
+        else{
+            addFollower(user, follower);
+        }
+    }
 
     public Set<TopicJSON> getTopicFollowers(User user)throws NoResultException{
         Set<TopicFollower> topicFollowers = getTopicFollowerEntities(user);
@@ -387,7 +457,8 @@ public class UserService implements UserSecurityService, UserOperations{
         if(topicFollowers == null)
             return null;
         for(TopicFollower tf : topicFollowers){
-            topicJSONs.add(new TopicJSON(tf.getTopic_Id(), null, null, null, null,null));
+            topicJSONs.add(new TopicJSON(tf.getTopic_Id(), null, null, null, null,
+            null));
         }
         return topicJSONs;
     }
@@ -416,12 +487,12 @@ public class UserService implements UserSecurityService, UserOperations{
         return categJSONs;
     }
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    //@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public User getUserEntity(UserJSON user)throws NoResultException{
-        if(user.getUserId() == 0 && user.getUsername() == null)
+        if(user.getUserId() == null && user.getUsername() == null)
             throw new NoResultException("No User Found");
         User userEntity = null;
-        if(user.getUserId() != 0){
+        if(user.getUserId() != null){
             try {
                 userEntity = entityManager.find(User.class, user.getUserId());
                 if(userEntity == null)
@@ -446,7 +517,8 @@ public class UserService implements UserSecurityService, UserOperations{
             List<User> users = entityManager.createNamedQuery("User.searchByUsername", User.class)
                                 .setParameter("username", "%" + userJSON.getUsername() + "%").getResultList();
             return users.stream().map(user ->{ 
-                                UserJSON userInst  = new UserJSON(user.getUserId(), user.getUsername());
+                                UserJSON userInst  = new UserJSON(user.getUserId(), null, null,
+                                 0, false, null, null, null, null, null, null);
                                     return userInst;
                     }).collect(Collectors.toSet());
             }

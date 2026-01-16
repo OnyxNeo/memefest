@@ -12,7 +12,7 @@ public abstract class FollowNotificationJSON extends NotificationJSON{
 
 
     @JsonCreator
-    public FollowNotificationJSON(@JsonProperty("NotificationID") int notId,
+    public FollowNotificationJSON(@JsonProperty("NotificationID") Long notId,
                                     @JsonProperty("Timestamp") LocalDateTime timestamp,
                                             @JsonProperty("User") UserJSON user,
                                                 @JsonProperty("Seen") boolean seen) {

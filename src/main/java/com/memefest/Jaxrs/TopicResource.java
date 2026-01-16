@@ -1,18 +1,14 @@
 package com.memefest.Jaxrs;
 
 import java.util.ListIterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ser.FilterProvider;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.Services.TopicOperations;
 
 import jakarta.annotation.security.PermitAll;
-import jakarta.annotation.security.RolesAllowed;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -52,7 +48,7 @@ public class TopicResource extends Resource{
     }   
 
     @OPTIONS
-    @Path("/{Id: \\d+}")
+    @Path("{Id: \\d+}")
     //@RolesAllowed({"User","Admin"})
     public Response topicIdOptions(){
         return Response.ok().build();
@@ -60,24 +56,23 @@ public class TopicResource extends Resource{
 
 
     @GET
-    @Path("/{Id: \\d+ }")
+    @Path("{Id: \\d+ }")
     @Produces("application/json")
     //@RolesAllowed({"Admin","User"})
-    public Response getTopic(@PathParam("Id") int id)throws JsonProcessingException{
-        topicExtendedInfoViewConfig();
+    public Response getTopic(@PathParam("Id") Long id)throws JsonProcessingException{
         TopicJSON topic = topicOps.getTopicInfo(new TopicJSON(id, null, null, null, null, null));
+        topicExtendedView();
         return Response.ok().entity(mapper.writeValueAsString(topic)).build();
     }
 
 
     @GET
-    @Path("/Search")
+    @Path("Search")
     @Produces("application/json")
     @Consumes("application/json")
     //@RolesAllowed({"User", "Admin"})
     public Response searchTopics(@MatrixParam("Title") String title){
-        TopicJSON topic = new TopicJSON(0, title, null, null, null, null);
-        topicPublicViewConfig();
+        TopicJSON topic = new TopicJSON(null, title, null, null, null, null);
         Set<TopicJSON> results = topicOps.searchTopic(topic);
         StringBuilder builder = new StringBuilder("[");
         ListIterator< TopicJSON> iterator = results.stream().collect(Collectors.toList()).listIterator();
@@ -96,24 +91,10 @@ public class TopicResource extends Resource{
 
     
     @OPTIONS
-    @Path("/Search")
+    @Path("Search")
     //@RolesAllowed({"User","Admin"})
     public Response searchOptions(){
         return Response.ok().build();
-    }
-    
-    protected void topicPublicViewConfig(){
-        Map<String,SimpleBeanPropertyFilter> filters = getPublicViews();
-        FilterProvider provider = setFilters(filters);
-        mapper.setFilterProvider(provider);
-    }
-
-    protected void topicExtendedInfoViewConfig(){
-        SimpleBeanPropertyFilter extView = SimpleBeanPropertyFilter.serializeAll();
-        Map<String, SimpleBeanPropertyFilter>  filters = getPublicViews();
-        filters.put("TopicPublicView", extView);
-        FilterProvider provider = setFilters(filters);
-        mapper.setFilterProvider(provider);
     }
 
 }

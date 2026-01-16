@@ -16,11 +16,11 @@ import com.memefest.DataAccess.JSON.RepostJSON;
 import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.DataAccess.JSON.TopicPostJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
-
+import jakarta.ejb.Local;
 import jakarta.persistence.NoResultException;
 
+@Local
 public interface PostOperations {
-
 
     public void editPostReplies(PostWithReplyJSON post);
 
@@ -42,7 +42,7 @@ public interface PostOperations {
 
     public void removePost(PostJSON post);
 
-    public PostWithReplyJSON getPostWithReplyInfo(PostWithReplyJSON postWithReply);
+    public Set<PostJSON> getPostWithReplyInfo(PostWithReplyJSON postWithReply);
     
     public PostJSON getPostInfo(PostJSON post);
 
@@ -73,6 +73,16 @@ public interface PostOperations {
     public Set<TopicPostJSON> getTopicPostsByTopic(TopicJSON topic);
 
     public Set<PostJSON> searchPost(PostJSON post);
+
+    public Set<PostJSON> getAllPosts();
+
+    public void togglePostUpvote(PostJSON post, UserJSON user);
+
+    public void togglePostDownvote(PostJSON post, UserJSON user);
+
+    public boolean isLikedByUser(PostJSON post, UserJSON user);
+
+    public boolean isDownvotedByUser(PostJSON post, UserJSON user);
 
     //public Set<RepostJSON> getReposts(RepostJSON repost);
 }

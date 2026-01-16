@@ -43,12 +43,12 @@ public class EventNotificationSubResource extends Resource{
                                             @DefaultValue("false") 
                                                 @MatrixParam("Seen") boolean seen,
                                                     @MatrixParam("EventTitle") String title){
-        EventJSON event = new EventJSON(0, title, null, 
+        EventJSON event = new EventJSON(null, title, null, 
                                         null, null, null, 
                                         null, null, null, null,
                                          null, null, null, null,
-                                          null);
-        EventNotificationJSON eventNot = new EventNotificationJSON(0, null, event, 
+                                          null,0);
+        EventNotificationJSON eventNot = new EventNotificationJSON(null, null, event, 
                                 new UserJSON(context.getUserPrincipal().getName()), seen);   
         Set<EventNotificationJSON> results = notOps.getEventNotificationInfo(eventNot);
         StringBuilder builder = new StringBuilder("[");
@@ -66,7 +66,9 @@ public class EventNotificationSubResource extends Resource{
             }
         }
         builder.append("]");
-        return Response.ok().entity(results).build();
+        return Response.ok().entity(results)
+        //.expires(LocalDateTime.now().plusMinutes(10).)
+        .build();
     }
 
     // maybe some should be form params
@@ -75,6 +77,7 @@ public class EventNotificationSubResource extends Resource{
     @Consumes("application/json") 
     public Response setEventNotification(@Context SecurityContext context,
                                             String eventNotEntity) throws JsonProcessingException{    
+        
         if(eventNotEntity == null)
             return Response.noContent().build();
         

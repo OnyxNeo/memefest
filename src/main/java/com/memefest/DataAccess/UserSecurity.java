@@ -6,8 +6,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
@@ -18,24 +16,24 @@ import jakarta.persistence.Table;
 @NamedQueries({
   @NamedQuery(
     name = "UserSecurity.findByUsername", 
-    query = "SELECT s.userId, s.username, s.email, se.accessTkn, se.refreshTkn FROM SecurityEntity se JOIN FETCH se.user s"
+    query = "SELECT s.userId, s.username, s.email, se.accessTkn, se.refreshTkn FROM SecurityEntity se INNER JOIN se.user s"
       + " WHERE s.username = :username"),
   @NamedQuery(
     name = "UserSecurity.findByEmail",
-    query = "SELECT s.userId, s.username, s.email, se.accessTkn, se.refreshTkn FROM SecurityEntity se JOIN FETCH se.user s"
+    query = "SELECT s.userId, s.username, s.email, se.accessTkn, se.refreshTkn FROM SecurityEntity se INNER JOIN se.user s"
       + " WHERE s.email = :email"),
   @NamedQuery(
     name = "UserSecurity.findByUserId", 
-    query = "SELECT s.userId, s.username, s.email, se.accessTkn, se.refreshTkn FROM SecurityEntity se JOIN FETCH se.user s"
+    query = "SELECT s.userId, s.username, s.email, se.accessTkn, se.refreshTkn FROM SecurityEntity se INNER JOIN se.user s"
       + " WHERE s.userId = :userId"), 
   @NamedQuery(
     name = "UserSecurity.updateJsonTkns",
-    query = "UPDATE SecurityEntity se SET se.accessTkn = :accessTkn, se.refreshTkn = :refreshTkn WHERE EXISTS" 
-      + " (SELECT se FROM SecurityEntity se INNER JOIN se.user s WHERE s.userId = :userId)"), 
+    query = "UPDATE SecurityEntity se SET se.accessTkn = :accessTkn, se.refreshTkn = :refreshTkn" 
+      + "  WHERE  se.user.username = :username"), 
   @NamedQuery(
     name = "UserSecurity.updatePasswordFromUsername", 
-    query = "UPDATE SecurityEntity se SET se.password = :password WHERE EXISTS (SELECT se.password FROM SecurityEntity se"
-      + " INNER JOIN se.user s WHERE s.username = :username)"), 
+    query = "UPDATE SecurityEntity se SET se.password = :password WHERE"
+      + " se.user.username = :username"), 
   @NamedQuery(
     name = "UserSecurity.updatePasswordFromUserId",
     query = "UPDATE SecurityEntity se SET se.password = :password WHERE EXISTS (SELECT se FROM SecurityEntity se"
@@ -53,10 +51,11 @@ import jakarta.persistence.Table;
 @Table(name = "USER_SECURITY")
 @Access(AccessType.FIELD)
 public class UserSecurity {
+  
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  //@GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "UserId", nullable = false, insertable = true, updatable = false)
-  private Integer userId;
+  private Long userId;
   
   @Column(name = "Refresh_Token")
   private String refreshTkn;
@@ -68,7 +67,7 @@ public class UserSecurity {
   private String accessTkn;
   
   @OneToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST})
-  @PrimaryKeyJoinColumn(name = "UserId")
+  @PrimaryKeyJoinColumn(name = "UserId",referencedColumnName = "UserId")
   private User user;
   
   public void setAccessTkn(String accessTkn) {
@@ -103,11 +102,11 @@ public class UserSecurity {
     this.password = password;
   }
   
-  public int getUserId() {
-    return this.userId.intValue();
+  public Long getUserId() {
+    return this.userId;
   }
   
-  public void setUserId(int userId) {
-    this.userId = Integer.valueOf(userId);
+  public void setUserId(Long userId) {
+    this.userId = userId;
   }
 }

@@ -2,6 +2,7 @@ package com.memefest.DataAccess;
 
 import jakarta.persistence.Access;
 import jakarta.persistence.AccessType;
+import jakarta.persistence.Cacheable;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -9,8 +10,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
@@ -34,7 +33,7 @@ import java.util.Set;
     query = "SELECT u FROM UserEntity u Where u.userId  = :userId"), 
   @NamedQuery(
     name = "User.getUserSecurityDetails",
-    query = "SELECT uSec FROM UserEntity u JOIN FETCH u.securityDetails uSec WHERE u.userId = :userId"),
+    query = "SELECT uSec FROM UserEntity u INNER JOIN u.securityDetails uSec WHERE u.userId = :userId"),
   @NamedQuery(
     name = "User.emailExists", 
     query = "SELECT COUNT(u) FROM UserEntity u WHERE u.email = :email"), 
@@ -45,12 +44,15 @@ import java.util.Set;
 @Entity(name = "UserEntity")
 @Table(name = "USERS")
 @Access(AccessType.FIELD)
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+@Cacheable
+//@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class User {
+  
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "UserId")
-  private int userId;
+  //@UuidGenerator
+  private Long userId;
   
   @Column(name = "F_name")
   private String firstName;
@@ -69,6 +71,9 @@ public class User {
   
   @Column(name = "Verified")
   private boolean verified;
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "user", optional = true)
+  private UserAdmin admn;
   
   @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "user", optional = false)
   private UserSecurity securityDetails;
@@ -92,14 +97,23 @@ public class User {
   @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, mappedBy = "user")
   private Set<Video> videos;
 
+  @OneToMany(fetch = FetchType.LAZY, cascade= {CascadeType.PERSIST}, mappedBy ="user")
+  private Set<Image> images;
+
+  @OneToMany(fetch = FetchType.LAZY, cascade= {CascadeType.PERSIST}, mappedBy = "taggedUser")
+  private Set<PostTaggedUser> taggedPosts;
+
   @OneToMany(mappedBy = "user")
-  @JoinColumn(referencedColumnName = "UserId")
+  //@JoinColumn(referencedColumnName = "UserId")
   //@JoinColumn(referencedColumnName = "UserId")
   private Set<Repost> reposts;
 
   @OneToMany(fetch = FetchType.LAZY, cascade ={CascadeType.PERSIST}, mappedBy = "user")
-  @JoinColumn(referencedColumnName = "UserId")
+  //@JoinColumn(referencedColumnName = "UserId")
   private Set<Event> events;
+
+  @OneToMany(fetch = FetchType.LAZY,cascade = {CascadeType.PERSIST}, mappedBy = "user")
+  private Set<EventPostNotification> eventPostNotifications;
 
   @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "follower")
   private Set<FollowNotification> followNotifications;
@@ -109,9 +123,29 @@ public class User {
 
   @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy= "user")
   private Set<EventNotification> eventNotifications;
+
+  @OneToMany(fetch = FetchType.LAZY, cascade =  CascadeType.PERSIST, mappedBy = "taggedUser")
+  @JoinColumn(referencedColumnName = "UserId")
+  private Set<RepostTaggedUser> taggedReposts;
+
+  @OneToMany(fetch = FetchType.LAZY, cascade =  CascadeType.PERSIST, mappedBy = "user")
+  @JoinColumn(referencedColumnName = "UserId")
+  private Set<Interact> interactions;
   
   public Set<EventNotification> getEventNotifications(){
     return this.eventNotifications;
+  }
+
+  public Set<PostTaggedUser> getTaggedPosts(){
+    return this.taggedPosts;
+  }
+
+  public Set<Interact> getInteractions(){
+    return this.interactions;
+  }
+  
+  public Set<RepostTaggedUser> getTaggedReposts(){
+    return this.taggedReposts;
   }
 
   public void setEventNotifications(Set<EventNotification> eventNotifications){
@@ -198,11 +232,11 @@ public class User {
     this.securityDetails = securityDetails;
   }
   
-  public int getUserId() {
+  public Long getUserId() {
     return this.userId;
   }
   
-  public void setUserId(int userId) {
+  public void setUserId(Long userId) {
     this.userId = userId;
   }
   
@@ -229,6 +263,15 @@ public class User {
   public void setVideos(Set<Video> videos) {
     this.videos = videos;
   }
+
+    public Set<Image> getImage() {
+    return this.images;
+  }
+
+  public void setImage(Set<Image> images) {
+    this.images = images;
+  }
+
 
   public Set<Repost> getReposts() {
     return this.reposts;
@@ -261,5 +304,9 @@ public class User {
 
   public Set<FollowNotification> getFollowNotifications(){
     return this.followNotifications;
+  }
+
+  public UserAdmin getAdmin(){
+    return this.admn;
   }
 }

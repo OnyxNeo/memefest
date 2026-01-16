@@ -10,8 +10,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.security.Key;
 import java.security.KeyPair;
 import java.security.KeyStore;
@@ -27,6 +27,7 @@ import java.security.cert.CertificateException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -38,25 +39,30 @@ import org.bouncycastle.operator.OperatorCreationException;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 
 public class CustomKeyLocator extends LocatorAdapter<Key> {
-  public final String keyAlias = "jinice";
+  private String keyAlias;
   
-  public static final String subjectDn = "CN=Jinice";
+  private static String subjectDn;
   
-  public static final String keyStorePass = "changeit";
+  private static String keyStorePass;
   
-  public static final String pkcs12StorePass = "changeit";
-  
-  public static final String jksLocation = "file:/J:/keystore.jks";
-  
-  public static KeyStore jkStore;
+  private static String pkcs12StorePass;
+
+  private static KeyStore jkStore;
+
+  private Properties props;
   
   static {
     try {
-      Properties properties = new Properties();
-      properties.setProperty("keyStore", "file:/J:/keystore.jks");
+      URL propsFile = Thread.currentThread().getContextClassLoader().getResource("keystore.properties");
+      Properties props = new Properties();
+      props.load(new FileInputStream(new File(propsFile.toURI())));   
       jkStore = KeyStore.getInstance("JKS");
-      FileInputStream fis = new FileInputStream(new File(new URI("file:/J:/keystore.jks")));
-      jkStore.load(fis, "changeit".toCharArray());
+      URL keyStoreLocation = Thread.currentThread().getContextClassLoader().getResource(props.getProperty("jksPath"));
+      FileInputStream fis = new FileInputStream(new File(keyStoreLocation.toURI()));
+      jkStore.load(fis, props.getProperty("storePass").toCharArray());
+      subjectDn = props.getProperty("subjectDn");
+      keyStorePass = props.getProperty("storePass");
+      pkcs12StorePass = props.getProperty("pkcs12StorePass");
     } catch (KeyStoreException ex) {
       ex.printStackTrace();
     } catch (NoSuchAlgorithmException ex) {
@@ -103,7 +109,7 @@ public class CustomKeyLocator extends LocatorAdapter<Key> {
   
   public void storeKey(KeyPair pair) throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException, IOException, CertificateException, OperatorCreationException {
     Certificate cert = selfSign(pair);
-    jkStore.setKeyEntry("jinice", pair.getPrivate(), "changeit".toCharArray(), new Certificate[] { cert });
+    jkStore.setKeyEntry("jinice", pair.getPrivate(), keyStorePass.toCharArray(), new Certificate[] { cert });
   }
   
   public static Certificate selfSign(KeyPair pair) throws OperatorCreationException, CertificateException {
@@ -111,7 +117,7 @@ public class CustomKeyLocator extends LocatorAdapter<Key> {
     Security.addProvider((Provider)bouncyCastleProvider);
     long now = System.currentTimeMillis();
     Date startDate = new Date(now);
-    X500Name dnName = new X500Name("CN=Jinice");
+    X500Name dnName = new X500Name(subjectDn);
     BigInteger certSerialNumber = new BigInteger(Long.toString(now));
     Calendar calendar = Calendar.getInstance();
     calendar.setTime(startDate);
@@ -132,11 +138,15 @@ public class CustomKeyLocator extends LocatorAdapter<Key> {
     return thumbPrint.toString();
   }
   
-  public static KeyPair loadFromPkcs12(String filename, char[] password) throws KeyStoreException, IOException, NoSuchAlgorithmException, CertificateException, UnrecoverableEntryException {
+  public static KeyPair loadFromPkcs12(String filename, char[] sourcePassword,
+                                  char[] destPassword, 
+                                  String destAlias, String sourceAlias) 
+                                  throws KeyStoreException, IOException, NoSuchAlgorithmException, 
+                                  CertificateException, UnrecoverableEntryException {
     KeyStore pkcs12Store = KeyStore.getInstance("PKCS12");
     FileInputStream fis = new FileInputStream(filename);
     try {
-      pkcs12Store.load(fis, password);
+      pkcs12Store.load(fis, sourcePassword);
       fis.close();
     } catch (Throwable throwable) {
       try {
@@ -146,23 +156,20 @@ public class CustomKeyLocator extends LocatorAdapter<Key> {
       } 
       throw throwable;
     } 
-    KeyStore.ProtectionParameter param = new KeyStore.PasswordProtection(password);
-    KeyStore.Entry entry = pkcs12Store.getEntry("jinice", param);
+    KeyStore.ProtectionParameter param = new KeyStore.PasswordProtection(sourcePassword);
+    KeyStore.Entry entry = pkcs12Store.getEntry(sourceAlias, param);
     if (!(entry instanceof KeyStore.PrivateKeyEntry))
       throw new KeyStoreException("Thats not a private key!"); 
     KeyStore.PrivateKeyEntry privateKeyEntry = (KeyStore.PrivateKeyEntry)entry;
     PublicKey publicKey = privateKeyEntry.getCertificate().getPublicKey();
     PrivateKey key = privateKeyEntry.getPrivateKey();
-    KeyStore jksStore = KeyStore.getInstance("JKS");
-    FileInputStream fileInputStream1 = new FileInputStream("file:/J:/keystore.jks");
-    jksStore.load(fileInputStream1, "file:/J:/keystore.jks".toCharArray());
-    if (!jksStore.containsAlias("jinice"))
-      jksStore.setKeyEntry("jinice", key, "changeit".toCharArray(), privateKeyEntry.getCertificateChain()); 
+    if (!jkStore.containsAlias(destAlias))
+      jkStore.setKeyEntry(destAlias, key, destPassword, privateKeyEntry.getCertificateChain()); 
     return new KeyPair(publicKey, key);
   }
   
   public static KeyPair loadFromJKS() throws KeyStoreException, NoSuchAlgorithmException, UnrecoverableEntryException, IOException, CertificateException {
-    KeyStore.ProtectionParameter param = new KeyStore.PasswordProtection("changeit".toCharArray());
+    KeyStore.ProtectionParameter param = new KeyStore.PasswordProtection(keyStorePass.toCharArray());
     KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry)jkStore.getEntry("jinice", param);
     if (entry == null)
       throw new KeyStoreException("Thats not a private key!"); 

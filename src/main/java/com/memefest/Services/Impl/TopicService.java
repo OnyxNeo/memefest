@@ -12,8 +12,17 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import org.eclipse.persistence.config.PersistenceUnitProperties;
+import org.eclipse.persistence.config.TargetServer;
+import org.eclipse.persistence.internal.jpa.config.persistenceunit.PersistenceUnitImpl;
+import org.eclipse.persistence.jpa.PersistenceProvider;
+
 import com.memefest.DataAccess.Category;
-import com.memefest.DataAccess.Post;
 import com.memefest.DataAccess.Topic;
 import com.memefest.DataAccess.TopicCategory;
 import com.memefest.DataAccess.TopicCategoryId;
@@ -30,10 +39,13 @@ import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.PostOperations;
 import com.memefest.Services.TopicOperations;
 import com.memefest.Services.UserOperations;
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
-import jakarta.annotation.sql.DataSourceDefinition;
 import jakarta.ejb.EJB;
+import jakarta.ejb.EJBException;
 import jakarta.ejb.ScheduleExpression;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.Timeout;
@@ -41,24 +53,21 @@ import jakarta.ejb.Timer;
 import jakarta.ejb.TimerConfig;
 import jakarta.ejb.TimerService;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceContextType;
+import jakarta.persistence.spi.PersistenceUnitTransactionType;
+import jakarta.transaction.TransactionScoped;
 
 
-@DataSourceDefinition(
-  name = "java:app/jndi/memefest/dataSourcessde",
-  url = "jdbc:sqlserver://;servername=CHHUMBUCKET;DatabaseName=MemeFest;trustServerCertificate=true",
-  className = "com.microsoft.sqlserver.jdbc.SQLServerDataSource",
-  user = "Neutron",
-  password = "scoobyDoo24"
-)
 @Stateless(name = "TopicService")
 public class TopicService implements TopicOperations{
+
+
     @Resource
     private TimerService timerService;
-
-    @PersistenceContext(unitName = "memeFest", type = PersistenceContextType.TRANSACTION)
+    
+    @TransactionScoped
+    //@PersistenceContext(unitName = "TopicService")
     private EntityManager entityManager;
 
     @EJB
@@ -72,6 +81,125 @@ public class TopicService implements TopicOperations{
 
     @EJB
     private NotificationOperations notOps;
+
+
+    private EntityManagerFactory factory;
+
+    @PostConstruct
+    public void init(){
+        String databaseName = "Memefest";
+        String serverName = "CHHUMBUCKET";
+        String instanceName = "MSSQLSERVER";
+        String username = "Neutron";
+        String password = "ScoobyDoo24";
+        String encrypt = "false";
+        int portNumber = 1433;
+        boolean trustServerCertificate = true;
+
+
+        String dataSourceName = "DataSource/TopicService";
+        String unitName = "TopicServicePersistenceUnit";  
+        
+        SQLServerDataSource ssDataSource = new SQLServerDataSource();
+        ssDataSource.setDatabaseName(databaseName);
+        ssDataSource.setTrustServerCertificate(trustServerCertificate);
+        ssDataSource.setServerName(serverName);
+        ssDataSource.setInstanceName(instanceName);
+        ssDataSource.setUser(username);
+        ssDataSource.setPassword(password);
+        ssDataSource.setPortNumber(portNumber);
+        ssDataSource.setEncrypt(encrypt);
+        try{
+            Context context = new InitialContext();   
+            try {
+
+                context.rebind(dataSourceName, (DataSource) ssDataSource);
+            }catch (NamingException e) {
+                try {
+                    context.bind(dataSourceName,(DataSource) ssDataSource);
+                //ssDataSource = (DataSource) context.lookup("DataSource/Memefest");
+                } catch (NamingException ec) {
+                    throw new RuntimeException(ec);
+                }
+            }
+        }catch(NamingException ex){
+            throw new RuntimeException(ex);
+        }
+            Map<String, Object> memeProps = new HashMap<>();
+            memeProps.put(PersistenceUnitProperties.TRANSACTION_TYPE, PersistenceUnitTransactionType.JTA.name());
+            memeProps.put(PersistenceUnitProperties.TARGET_SERVER, TargetServer.None);
+            memeProps.put(PersistenceUnitProperties.JDBC_USER, username);
+            memeProps.put(PersistenceUnitProperties.JDBC_PASSWORD, password);
+            //memeProps.put(PersistenceUnitProperties.CONNECTION_POOL_JTA_DATA_SOURCE, "DataSource/Memefest");
+            memeProps.put(PersistenceUnitProperties.JTA_DATASOURCE, dataSourceName);
+            memeProps.put(PersistenceUnitProperties.ECLIPSELINK_PERSISTENCE_UNITS, unitName);
+            memeProps.put(PersistenceUnitProperties.JDBC_DRIVER, "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            PersistenceProvider provider = new PersistenceProvider();
+
+            org.eclipse.persistence.jpa.config.PersistenceUnit unit = new PersistenceUnitImpl(unitName);
+            unit.setProvider("org.eclipse.persistence.jpa.PersistenceProvider");
+        //unit.setJtaDataSource("DataSource/Memefest" );
+
+        unit.setClass("com.memefest.DataAccess.UserSecurity");
+        unit.setClass("com.memefest.DataAccess.CategoryFollower");
+        unit.setClass("com.memefest.DataAccess.Category");
+        unit.setClass("com.memefest.DataAccess.Event");
+        unit.setClass("com.memefest.DataAccess.EventCategory");
+        unit.setClass("com.memefest.DataAccess.EventImage");
+        unit.setClass("com.memefest.DataAccess.EventNotification");
+        unit.setClass("com.memefest.DataAccess.EventPost");
+        unit.setClass("com.memefest.DataAccess.EventPostNotification");
+        unit.setClass("com.memefest.DataAccess.EventVideo");
+        unit.setClass("com.memefest.DataAccess.FollowNotification");
+        unit.setClass("com.memefest.DataAccess.Image");
+        unit.setClass("com.memefest.DataAccess.Post");
+        unit.setClass("com.memefest.DataAccess.PostCategory");
+        unit.setClass("com.memefest.DataAccess.PostImage");
+        unit.setClass("com.memefest.DataAccess.PostNotification");
+        unit.setClass("com.memefest.DataAccess.PostReply");
+        unit.setClass("com.memefest.DataAccess.PostVideo");
+        unit.setClass("com.memefest.DataAccess.JokeOfDay");
+        unit.setClass("com.memefest.DataAccess.Sponsor");
+        unit.setClass("com.memefest.DataAccess.JokeOfDayPost");
+        unit.setClass("com.memefest.DataAccess.PostTaggedUser");
+        unit.setClass("com.memefest.DataAccess.RepostTaggedUser");
+        unit.setClass("com.memefest.DataAccess.Interact");
+        unit.setClass("com.memefest.DataAccess.Repost");
+        unit.setClass("com.memefest.DataAccess.SubCategory");
+        unit.setClass("com.memefest.DataAccess.Topic");
+        unit.setClass("com.memefest.DataAccess.TopicCategory");
+        unit.setClass("com.memefest.DataAccess.TopicFollower");
+        unit.setClass("com.memefest.DataAccess.TopicFollowNotification");
+        unit.setClass("com.memefest.DataAccess.TopicImage");
+        unit.setClass("com.memefest.DataAccess.TopicPost");
+        unit.setClass("com.memefest.DataAccess.TopicPostNotification");
+        unit.setClass("com.memefest.DataAccess.TopicVideo");
+        unit.setClass("com.memefest.DataAccess.User");
+        unit.setClass("com.memefest.DataAccess.UserAdmin");
+        unit.setClass("com.memefest.DataAccess.UserFollower");
+        unit.setClass("com.memefest.DataAccess.Video");
+
+        unit.setExcludeUnlistedClasses(false);
+        //unit.setName("Memefest");
+        unit.setTransactionType(PersistenceUnitTransactionType.JTA);     
+        unit.setName(unitName);
+        unit.setJtaDataSource(dataSourceName);
+        //PersistenceProvider provider = new PersistenceProvider();
+        //persistenceUnit.setExcludeUnlistedClasses(false);
+        //persistenceUnit.getPersistenceUnitInfo().
+        this.factory = provider.createContainerEntityManagerFactory(unit.getPersistenceUnitInfo(), memeProps);
+        //EntityManagerFactoryWrapper wrapper = new EntityManagerFactoryWrapper(factory
+
+        this.entityManager = factory.createEntityManager();
+            //entityManager.joinTransaction();
+      
+    }
+
+    @PreDestroy
+    public void destroy(){
+        //factory.close();
+        entityManager.close();
+    }
 
     public void createScheduledTopic(TopicJSON topic, LocalDateTime postDate){
         ScheduleExpression schedule = new ScheduleExpression()
@@ -87,7 +215,7 @@ public class TopicService implements TopicOperations{
         Collection<Timer> timers = timerService.getTimers();
         for (Timer timerInst : timers) {
             TopicJSON scheduledInst = (TopicJSON) timerInst.getInfo();
-            if(topic.getTopicId() != 0 && scheduledInst.getTopicId() == scheduledInst.getTopicId()
+            if(topic.getTopicId() != null && scheduledInst.getTopicId() == scheduledInst.getTopicId()
             || topic.getTitle() == scheduledInst.getTitle()){
                     timerInst.cancel();
             }
@@ -99,7 +227,9 @@ public class TopicService implements TopicOperations{
         for(Timer timer : timerService.getAllTimers()){
             if(timer.getInfo() instanceof TopicJSON){
                 TopicJSON timerInfo = (TopicJSON) timer.getInfo();
-                if(timerInfo.getTopicId() == topic.getTopicId() || timerInfo.getTitle().equalsIgnoreCase(topic.getTitle())){
+                if((topic != null && topic.getTopicId()!= null && timerInfo.getTopicId() == topic.getTopicId() && timerInfo.getTopicId()!= null)
+                         || (topic!= null && timerInfo.getTitle()!= null && timerInfo.getTitle() != null && timerInfo.getTitle().equalsIgnoreCase(topic.getTitle())) 
+                            || topic == null){
                     ScheduleExpression schedule = timer.getSchedule();
                     LocalDateTime dateTime = LocalDateTime.of(Integer.parseInt(schedule.getYear()), 
                                             Integer.parseInt(schedule.getMonth()), 
@@ -239,7 +369,7 @@ public class TopicService implements TopicOperations{
         if(topic == null)
             throw new NoResultException();
         Topic foundTopic = null;
-        if ((topic != null) && topic.getTopicId() != 0) {
+        if ((topic != null) && topic.getTopicId() != null) {
             foundTopic = (Topic)this.entityManager.find(Topic.class, topic.getTopicId());
             if(foundTopic == null)
                 throw new NoResultException("Topic with topic Id not found");
@@ -283,7 +413,7 @@ public class TopicService implements TopicOperations{
   
     private TopicFollower getTopicFollower(UserJSON user, TopicJSON topic) {
         TopicFollower foundFollower = null;
-        if (user != null && topic != null && user.getUserId() != 0 && topic.getTopicId() != 1) {
+        if (user != null && topic != null && user.getUserId() != null && topic.getTopicId() != null) {
             TopicFollowerId followerId = new TopicFollowerId();
             followerId.setUserId(user.getUserId());
             followerId.setTopic_Id(topic.getTopicId());
@@ -397,7 +527,7 @@ public class TopicService implements TopicOperations{
         } 
     }
 
-    public TopicJSON getTopicInfo(TopicJSON topic) throws NoResultException{
+    public TopicJSON getTopicInfo(TopicJSON topic) throws NoResultException,EJBException{
         if(topic == null)
             throw new NoResultException("topic is null yo");
         Topic topicEntity = getTopicEntity(topic);
@@ -415,7 +545,8 @@ public class TopicService implements TopicOperations{
         }
         Set<UserJSON> users = (Set<UserJSON>)topicFollowers.stream().map(topicFollower -> new UserJSON(topicFollower.getUser()
                                 .getUsername())).collect(Collectors.toSet());
-        Set<TopicPostJSON> posts = (Set<TopicPostJSON>)topicEntity.getPosts().stream().map(topicPost ->{
+        Set<TopicPostJSON> posts = postOperations.getTopicPostsByTopic(topic);
+       /*  Set<TopicPostJSON> posts = (Set<TopicPostJSON>)topicEntity.getPosts().stream().map(topicPost ->{
                                     Post postInfo = topicPost.getPost();
                                     return new TopicPostJSON(topicPost.getPost_Id(), postInfo.getComment(), 
                                     LocalDateTime.ofInstant(postInfo.getCreated().toInstant(), ZoneId.systemDefault()),
@@ -425,6 +556,7 @@ public class TopicService implements TopicOperations{
                                     LocalDateTime.ofInstant(topicPost.getTopic().getCreated().toInstant(), ZoneId.systemDefault()),
                                    null, null, null),null,null);
                                 }).collect(Collectors.toSet());
+        */
         if (topicEntity != null) {
            topicJSON = new TopicJSON(topicEntity.getTopic_Id(), topicEntity.getTitle(), 
                                     LocalDateTime.ofInstant(topicEntity.getCreated().toInstant(), ZoneId.systemDefault()),
@@ -451,7 +583,7 @@ public class TopicService implements TopicOperations{
                 }
                 Set<UserJSON> users = (Set<UserJSON>)topicFollowers.stream().map(topicFollower -> new UserJSON(topicFollower.getUser()
                                 .getUsername())).collect(Collectors.toSet());
-                Set<TopicPostJSON> posts = (Set<TopicPostJSON>)topicEntity.getPosts().stream().map(topicPost ->{
+               /*  Set<TopicPostJSON> posts = (Set<TopicPostJSON>)topicEntity.getPosts().stream().map(topicPost ->{
                                     Post postInfo = topicPost.getPost();
                                     return new TopicPostJSON(topicPost.getPost_Id(), postInfo.getComment(), 
                                     LocalDateTime.ofInstant(postInfo.getCreated().toInstant(), ZoneId.systemDefault()),
@@ -461,7 +593,9 @@ public class TopicService implements TopicOperations{
                                     LocalDateTime.ofInstant(topicPost.getTopic().getCreated().toInstant(), ZoneId.systemDefault()),
                                    null, null, null),null, null);
                                 }).collect(Collectors.toSet());
-                topicJSON = new TopicJSON(topicEntity.getTopic_Id(), topicEntity.getTitle(), 
+                */
+                Set<TopicPostJSON> posts = postOperations.getTopicPostsByTopic(topic);
+                                topicJSON = new TopicJSON(topicEntity.getTopic_Id(), topicEntity.getTitle(), 
                                     LocalDateTime.ofInstant(topicEntity.getCreated().toInstant(), ZoneId.systemDefault()),
                                     categories, posts, users);
                 return topicJSON;

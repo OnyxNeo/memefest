@@ -6,36 +6,36 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class EventPostNotificationId{
     
-    @Column(name = "Event_Id", nullable = false, insertable = false, updatable = false)
-    private int eventId;
+    @Column(name = "Event_Id", nullable = false, updatable = false, insertable = false)
+    private Long eventId;
 
-    @Column(name = "Post_Id", nullable = false, insertable = false, updatable = false)
-    private int postId;
+    @Column(name = "Post_Id", nullable = false, updatable = false, insertable = false)
+    private Long postId;
 
-    @Column(name = "UserId", nullable = false, insertable = false, updatable = false)
-    private int recipientId;
+    @Column(name = "UserId", nullable = false, updatable = false, insertable = false)
+    private Long recipientId;
 
-    public int getEvent_Id(){
+    public Long getEvent_Id(){
         return this.eventId;
     }
 
-    public void setEvent_Id(int eventId){
+    public void setEvent_Id(Long eventId){
         this.eventId = eventId;
     }
 
-    public int getPost_Id(){
+    public Long getPost_Id(){
         return postId;
     }
 
-    public void setPost_Id(int postId){
+    public void setPost_Id(Long postId){
         this.postId = postId;
     }
 
-    public int getUserId(){
+    public Long getUserId(){
         return this.postId;
     }
 
-    public void setUserId(int recipientId){
+    public void setUserId(Long recipientId){
         this.recipientId = recipientId;
     }
 }

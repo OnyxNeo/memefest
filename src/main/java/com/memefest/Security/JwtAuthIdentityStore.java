@@ -19,6 +19,7 @@ import io.jsonwebtoken.io.Serializer;
 import io.jsonwebtoken.jackson.io.JacksonDeserializer;
 import io.jsonwebtoken.jackson.io.JacksonSerializer;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
 import jakarta.persistence.NoResultException;
 import jakarta.security.enterprise.credential.Credential;
@@ -53,9 +54,9 @@ public class JwtAuthIdentityStore implements IdentityStore {
   static {
     SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAll();
     SimpleFilterProvider provider = new SimpleFilterProvider();
-    provider.addFilter("UserPublicView", filter);
+    provider.addFilter("UserView", filter);
     mapper.setFilterProvider(provider);
-    mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
+    //mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
   }
   
   public CredentialValidationResult validate(Credential credential) {
@@ -121,7 +122,7 @@ public class JwtAuthIdentityStore implements IdentityStore {
   
   public static UserSecurityJSON createUserAccessToken(UserJSON userJSON) {
     LocalDateTime allocatedDate = LocalDateTime.now();
-    LocalDateTime expiryDate = LocalDateTime.now().plusHours(2L);
+    LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(2);
     String token = null;
     try {
       KeyPair keyPair = CustomKeyLocator.loadFromJKS();
@@ -149,7 +150,7 @@ public class JwtAuthIdentityStore implements IdentityStore {
       userSecurity = userJSON.getUserSecurity();
       userSecurity.setAccessTkn(token);
     } else {
-      userSecurity = new UserSecurityJSON(token, null, null, userJSON);
+      userSecurity = new UserSecurityJSON(token, null, null, userJSON.getUserId(), userJSON.getUsername());
     } 
     return userSecurity;
   }
@@ -179,7 +180,7 @@ public class JwtAuthIdentityStore implements IdentityStore {
       userSecurity = userJSON.getUserSecurity();
       userSecurity.setRefreshTkn(token);
     } else {
-      userSecurity = new UserSecurityJSON(token, null, null, userJSON);
+      userSecurity = new UserSecurityJSON(null, null, token, userJSON.getUserId(), userJSON.getUsername());
     } 
     return userSecurity;
   }
@@ -196,9 +197,9 @@ public class JwtAuthIdentityStore implements IdentityStore {
       if (userSecurityJSON.getUser().getUsername() != null) {
         Cache<String, String> userSecurityCache = cacheManager.getCache("usernameCache", String.class, String.class);
         userSecurityCache.put(userSecurityJSON.getUser().getUsername(), mapper.writeValueAsString(userJSON));
-      } else if (userJSON.getUserId() != 0) {
-        Cache<Integer, String> userSecurityCache = cacheManager.getCache("userIdCache", Integer.class, String.class);
-        userSecurityCache.put(Integer.valueOf(userSecurityJSON.getUser().getUserId()), mapper.writeValueAsString(userJSON));
+      } else if (userJSON.getUserId() != null) {
+        Cache<Long, String> userSecurityCache = cacheManager.getCache("userIdCache", Long.class, String.class);
+        userSecurityCache.put(userSecurityJSON.getUser().getUserId(), mapper.writeValueAsString(userJSON));
       } 
     } catch (JsonProcessingException ex) {
       ex.printStackTrace();
@@ -208,9 +209,9 @@ public class JwtAuthIdentityStore implements IdentityStore {
   public UserSecurityJSON getCachedUserSecurityDetails(UserJSON user) {
     CacheManager cacheManager = this.cacheHelper.getCacheManager();
     try {
-      if (user.getUserId() != 0) {
-        Cache<Integer, String> userSecurityCache = cacheManager.getCache("userIdCache", Integer.class, String.class);
-        String cacheValue = (String)userSecurityCache.get(Integer.valueOf(user.getUserId()));
+      if (user.getUserId() != null) {
+        Cache<Long, String> userSecurityCache = cacheManager.getCache("userIdCache", Long.class, String.class);
+        String cacheValue = (String)userSecurityCache.get(user.getUserId());
         if (cacheValue != null)
           return (UserSecurityJSON)mapper.readValue(cacheValue, UserSecurityJSON.class); 
       } else if (user.getUsername() != null) {
@@ -246,29 +247,29 @@ public class JwtAuthIdentityStore implements IdentityStore {
     try {
       LinkedHashMap<?, ?> userDetails = (LinkedHashMap<?, ?>)((Claims)Jwts.parser().keyLocator((Locator)keyLocator).
                             json((Deserializer)new JacksonDeserializer(mapper)).build().parseSignedClaims(token).getPayload()).get("user", LinkedHashMap.class);
-      int userId = 0;
+      Long userId = null;
       String username = null;
       String email = null;
       String firstName = null;
       String lastName = null;
       boolean verified = false;
       int contacts = 0;
-      if (userDetails.containsKey("UserId") && userDetails.get("UserId") != null)
-        userId = ((Integer)userDetails.get("UserId")).intValue(); 
-      if (userDetails.containsKey("Username") && userDetails.get("Username") != null)
-        username = (String)userDetails.get("Username"); 
-      if (userDetails.containsKey("Email") && userDetails.get("Email") != null)
-        email = (String)userDetails.get("Email"); 
-      if (userDetails.containsKey("FirstName") && userDetails.get("FirstName") != null)
-        firstName = (String)userDetails.get("FirstName"); 
-      if (userDetails.containsKey("LastName") && userDetails.get("LastName") != null)
-        lastName = (String)userDetails.get("LastName"); 
-      if (userDetails.containsKey("Verified") && userDetails.get("Verified") != null)
-        verified = ((Boolean)userDetails.get("Verified")).booleanValue(); 
-      if (userDetails.containsKey("Contacts") && userDetails.get("Contacts") != null)
-        contacts = ((Integer)userDetails.get("Contacts")).intValue(); 
-      user = new UserJSON(email, username, contacts, verified, firstName, lastName, null);
-      user.setUserId(userId);
+      if (userDetails.containsKey("userId") && userDetails.get("userId") != null)
+        userId = Long.valueOf(((Integer)userDetails.get("userId"))); 
+      if (userDetails.containsKey("userName") && userDetails.get("userName") != null)
+        username = (String)userDetails.get("userName"); 
+      if (userDetails.containsKey("email") && userDetails.get("email") != null)
+        email = (String)userDetails.get("email"); 
+      if (userDetails.containsKey("firstName") && userDetails.get("firstName") != null)
+        firstName = (String)userDetails.get("firstName"); 
+      if (userDetails.containsKey("lastName") && userDetails.get("lastName") != null)
+        lastName = (String)userDetails.get("lastName"); 
+      if (userDetails.containsKey("verified") && userDetails.get("verified") != null)
+        verified = ((Boolean)userDetails.get("verified")).booleanValue(); 
+      if (userDetails.containsKey("contacts") && userDetails.get("contacts") != null)
+        contacts = ((Integer)userDetails.get("contacts")).intValue(); 
+      user = new UserJSON(userId, email, username, contacts, verified, firstName, lastName,
+       null, null, null, null);
     } catch (JwtException ex) {
       ex.printStackTrace();
     } 

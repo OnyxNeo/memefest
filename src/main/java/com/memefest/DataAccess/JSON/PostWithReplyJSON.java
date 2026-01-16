@@ -1,36 +1,38 @@
 package com.memefest.DataAccess.JSON;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import java.time.LocalDateTime;
 import java.util.Set;
 
 @JsonRootName("PostWithReplys")
-//@JsonFilter("PostWithReplyPublicView")
+@JsonFilter("PostWithReplyView")
 public class PostWithReplyJSON extends PostJSON {
-  @JsonProperty("Replys")
+  @JsonProperty("comments") 
   private Set<PostJSON> posts;
   
   @JsonCreator
-  public PostWithReplyJSON(@JsonProperty("PostId") int postId,
-                      @JsonProperty("Comment") String comment, @JsonProperty("Created") 
-                        LocalDateTime created, @JsonProperty("Upvotes") int upvotes, 
-                        @JsonProperty("Downvotes") int downvotes,
-                         @JsonProperty("User") UserJSON user,
-                           @JsonProperty("Replys") Set<PostJSON> posts,
-                           @JsonProperty("Categories") Set<CategoryJSON> categories,
-                      @JsonProperty("CanceledCategories")Set<CategoryJSON> canceledCats) {
-    super(postId, comment, created, upvotes, downvotes, user, categories, canceledCats);
+  public PostWithReplyJSON(@JsonProperty("id") Long postId,
+                      @JsonProperty("body") String comment, @JsonProperty("createdAt") 
+                        LocalDateTime created, @JsonProperty("likes") int upvotes, 
+                        @JsonProperty("downvotes") int downvotes,
+                         @JsonProperty("user") UserJSON user,
+                           @JsonProperty("comments") Set<PostJSON> posts,
+                           @JsonProperty("categories") Set<CategoryJSON> categories,
+                      @JsonProperty("canceledCategories")Set<CategoryJSON> canceledCats, 
+                      @JsonProperty("taggedUsers") Set<UserJSON> taggedUsers) {
+    super(postId, comment, created, upvotes, downvotes, user, categories, canceledCats, taggedUsers);
     this.posts = posts;
   }
   
-  @JsonProperty("Replys")
+  @JsonProperty("comments")
   public Set<PostJSON> getPosts() {
     return this.posts;
   }
   
-  @JsonProperty("Replys")
+  @JsonProperty("comments")
   public void setPosts(Set<PostJSON> posts) {
     this.posts = posts;
   }

@@ -49,19 +49,19 @@ public class CategoryFollower {
     return this.user;
   }
   
-  public void setCat_Id(int followerId) {
+  public void setCat_Id(Long followerId) {
     this.id.setCat_Id(followerId);
   }
   
-  public void setUserId(int userId) {
+  public void setUserId(Long userId) {
     this.id.setUserId(userId);
   }
   
-  public int getCat_Id() {
+  public Long getCat_Id() {
     return this.id.getCat_Id();
   }
   
-  public int getUserId() {
+  public Long getUserId() {
     return this.id.getUserId();
   }
 }

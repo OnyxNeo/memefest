@@ -1,17 +1,12 @@
 package com.memefest.DataAccess;
 
-import java.util.Set;
-
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
 
 @NamedQueries({
@@ -55,19 +50,19 @@ public class TopicCategory{
     return this.topic;
   }
   
-  public int getCat_Id(){
+  public Long getCat_Id(){
     return topicCategoryId.getCat_Id();
   }
 
-  public void setCat_Id(int catId){
+  public void setCat_Id(Long catId){
     this.topicCategoryId.setCat_Id(catId);
   }
 
-  public int getTopic_Id(){
+  public Long getTopic_Id(){
     return topicCategoryId.getTopic_Id();
   }
 
-  public void setTopic_Id(int topicId){
+  public void setTopic_Id(Long topicId){
     this.topicCategoryId.setTopic_Id(topicId);
   }
 }

@@ -12,7 +12,7 @@ public class TopicFollowNotificationJSON extends FollowNotificationJSON{
     private TopicJSON topic;
 
     @JsonCreator
-    public TopicFollowNotificationJSON(@JsonProperty("NotificationID") int notId,
+    public TopicFollowNotificationJSON(@JsonProperty("NotificationID") Long notId,
                                             @JsonProperty("Topic") TopicJSON topic,
                                                 @JsonProperty("Timestamp") LocalDateTime timestamp,
                                                     @JsonProperty("Follower") UserJSON user,

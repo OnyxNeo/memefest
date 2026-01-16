@@ -6,19 +6,19 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 
-@JsonRootName("EventNotification")
+@JsonRootName("eventNotification")
 public class EventNotificationJSON extends NotificationJSON {
 
-    @JsonProperty("Event")
+    @JsonProperty("event")
     private EventJSON event;
 
-    @JsonProperty("Canceled")
+    @JsonProperty("canceled")
     private boolean canceled;
     
     @JsonCreator
-    public EventNotificationJSON(@JsonProperty("NotificationID") int notId, 
-                                    @JsonProperty("Timestamp") LocalDateTime date, 
-                                        @JsonProperty("Event")EventJSON event, 
+    public EventNotificationJSON(@JsonProperty("notificationID") Long notId, 
+                                    @JsonProperty("timestamp") LocalDateTime date, 
+                                        @JsonProperty("event")EventJSON event, 
                                             @JsonProperty("User")UserJSON user,
                                                 @JsonProperty("Seen") boolean seen) {
         super(notId, date, Notification.EVENT, user, seen);

@@ -1,0 +1,141 @@
+<persistence>
+    <persistence-unit name="PostServicePersistenceUnit" transaction-type="JTA">
+        <jta-data-source>java:app/jdbc/DataSource/PostService</jta-data-source>
+        <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>     
+        <mapping class = "com.memefest.DataAccess.Category"/>
+        <mapping class = "com.memefest.DataAccess.CategoryFollower"/>
+        <mapping class = "com.memefest.DataAccess.Event"/>
+        <mapping class = "com.memefest.DataAccess.EventCategory"/>
+        <mapping class = "com.memefest.DataAccess.EventImage"/>
+        <mapping class = "com.memefest.DataAccess.EventNotification"/>
+        <mapping class = "com.memefest.DataAccess.EventPost"/>
+        <mapping class = "com.memefest.DataAccess.EventPostNotification"/>
+        <mapping class = "com.memefest.DataAccess.EventVideo"/>
+        <mapping class = "com.memefest.DataAccess.FollowNotification"/>
+        <mapping class = "com.memefest.DataAccess.Image"/>
+        <mapping class = "com.memefest.DataAccess.Post"/>
+        <mapping class = "com.memefest.DataAccess.PostCategory"/>
+        <mapping class = "com.memefest.DataAccess.PostImage"/>
+        <mapping class = "com.memefest.DataAccess.PostNotification"/>
+        <mapping class = "com.memefest.DataAccess.PostReply"/>
+        <mapping class = "com.memefest.DataAccess.PostVideo"/>
+        <mapping class = "com.memefest.DataAccess.Repost"/>
+        <mapping class = "com.memefest.DataAccess.SubCategory"/>
+        <mapping class = "com.memefest.DataAccess.Topic"/>
+        <mapping class = "com.memefest.DataAccess.TopicCategory"/>
+        <mapping class = "com.memefest.DataAccess.TopicFollower"/>
+        <mapping class = "com.memefest.DataAccess.TopicFollowNotification"/>
+        <mapping class = "com.memefest.DataAccess.TopicImage"/>
+        <mapping class = "com.memefest.DataAccess.TopicPost"/>
+        <mapping class = "com.memefest.DataAccess.TopicPostNotification"/>
+        <mapping class = "com.memefest.DataAccess.TopicVideo"/>
+        <mapping class = "com.memefest.DataAccess.User"/>
+        <mapping class = "com.memefest.DataAccess.UserAdmin"/>
+        <mapping class = "com.memefest.DataAccess.UserFollower"/>
+        <mapping class = "com.memefest.DataAccess.UserSecurity"/>
+        <mapping class = "com.memefest.DataAccess.Video"/>
+        <exclude-unlisted-classes>false</exclude-unlisted-classes>
+    </persistence-unit>
+    <!--<properties>-->
+
+      
+        <!-- JDBC connection pool settings
+          <session-factory>
+            <property name="jakarta.persistence.jdbc.driver">com.microsoft.sqlserver.jdbc.SqlServerDriver</property>
+            <property name="jakarta.persistence.jdbc.url">jdbc:sqlserver://;servername=CHHUMBUCKET;DatabaseName=Memefest;trustServerCertificate=true</property>
+            <property name="jakarta.persistence.user">Neutron</property>
+            <property name="jakarta.persistence.password">ScoobyDoo24</property>
+            <property name="jakarta.persistence.schema-generation.database.action" value="update"/>
+            
+
+
+        <property name="hibernate.connection.provider_class" 
+                      value="org.hibernate.hikaricp.internal.HikariCPConnectionProvider"/> 
+            <property name="hibernate.c3p0.min_size">5</property>
+            <property name="hibernate.c3p0.max_size">20</property>
+            <property name="hibernate.c3p0.timeout">300</property>
+
+                        <property name="hibernate.hikari.minimumIdle" value="5"/>
+            <property name="hibernate.hikari.maximumPoolSize" value="20"/>
+            <property name="hibernate.hikari.idleTimeout" value="300000"/>
+            <property name="hibernate.hikari.connectionTimeout" value="20000"/>
+            <property name="hibernate.hikari.maxLifetime" value="1200000"/>
+            <property name="hibernate.dialect.storage_engine" value="innodb"/>
+
+                
+             Default cache settings for all entities
+            <property name="hibernate.cache.caffeine.default.expireAfterWrite" value="300s"/>
+            <property name="hibernate.cache.caffeine.default.expireAfterAccess" value="300s"/>
+            <property name="hibernate.cache.caffeine.default.maximumSize" value="5000"/>
+            
+            Query cache specific settings
+            <property name="hibernate.cache.caffeine.query.expireAfterWrite" value="60s"/>
+            <property name="hibernate.cache.caffeine.query.maximumSize" value="1000"/>
+            
+             Collection cache settings 
+            <property name="hibernate.cache.caffeine.collection.expireAfterWrite" value="300s"/>
+            <property name="hibernate.cache.caffeine.collection.maximumSize" value="2000"/>
+            
+            Cache statistics (useful for monitoring)
+            <property name="hibernate.cache.use_structured_entries" value="true"/>
+            <property name="hibernate.cache.auto_evict_collection_cache" value="true"/>
+            
+            <property name="jakarta.persistence.jdbc.driver">com.microsoft.sqlserver.jdbc.SqlServerDriver</property>
+            <property name="jakarta.persistence.jdbc.url">jdbc:sqlserver://;servername=CHHUMBUCKET;DatabaseName=Memefest;trustServerCertificate=true</property>
+            <property name="jakarta.persistence.user">Neutron</property>
+            <property name="jakarta.persistence.password">@ScoobyDoo24</property>
+            
+        -->
+        <!-- SQL dialect 
+            <property name="hibernate.dialect">org.hibernate.dialect.MySQL8Dialect</property>
+        -->
+        
+        <!-- Enable Hibernate to automatically create/drop tables 
+            <property name="hibernate.hbm2ddl.auto">create-drop</property>
+             <property name="hibernate.javax.cache.uri">ehcache.xml</property>
+        -->
+
+        <!-- Show SQL statements in console
+        <property name="hibernate.show_sql">true</property>
+         Caching configuration 
+        <property name="hibernate.cache.region.factory_class">org.hibernate.cache.jcache.JCacheRegionFactory</property>
+        <property name="hibernate.cache.use_second_level_cache">true</property>
+        <property name="hibernate.cache.use_query_cache">true</property>
+        <property name="jakarta.cache.provider">org.ehcache.jsr107.EhcacheCachingProvider</property>
+       
+        <mapping class = "com.memefest.DataAccess.Category"/>
+        <mapping class = "com.memefest.DataAccess.CategoryFollower"/>
+        <mapping class = "com.memefest.DataAccess.Event"/>
+        <mapping class = "com.memefest.DataAccess.EventCategory"/>
+        <mapping class = "com.memefest.DataAccess.EventImage"/>
+        <mapping class = "com.memefest.DataAccess.EventNotification"/>
+        <mapping class = "com.memefest.DataAccess.EventPost"/>
+        <mapping class = "com.memefest.DataAccess.EventPostNotification"/>
+        <mapping class = "com.memefest.DataAccess.EventVideo"/>
+        <mapping class = "com.memefest.DataAccess.FollowNotification"/>
+        <mapping class = "com.memefest.DataAccess.Image"/>
+        <mapping class = "com.memefest.DataAccess.Post"/>
+        <mapping class = "com.memefest.DataAccess.PostCategory"/>
+        <mapping class = "com.memefest.DataAccess.PostImage"/>
+        <mapping class = "com.memefest.DataAccess.PostNotification"/>
+        <mapping class = "com.memefest.DataAccess.PostReply"/>
+        <mapping class = "com.memefest.DataAccess.PostVideo"/>
+        <mapping class = "com.memefest.DataAccess.Repost"/>
+        <mapping class = "com.memefest.DataAccess.SubCategory"/>
+        <mapping class = "com.memefest.DataAccess.Topic"/>
+        <mapping class = "com.memefest.DataAccess.TopicCategory"/>
+        <mapping class = "com.memefest.DataAccess.TopicFollower"/>
+        <mapping class = "com.memefest.DataAccess.TopicFollowNotification"/>
+        <mapping class = "com.memefest.DataAccess.TopicImage"/>
+        <mapping class = "com.memefest.DataAccess.TopicPost"/>
+        <mapping class = "com.memefest.DataAccess.TopicPostNotification"/>
+        <mapping class = "com.memefest.DataAccess.TopicVideo"/>
+        <mapping class = "com.memefest.DataAccess.User"/>
+        <mapping class = "com.memefest.DataAccess.UserAdmin"/>
+        <mapping class = "com.memefest.DataAccess.UserFollower"/>
+        <mapping class = "com.memefest.DataAccess.UserSecurity"/>
+        <mapping class = "com.memefest.DataAccess.Video"/>
+        </session-factory>
+        -->
+    <!--</properties>-->
+</persistence>

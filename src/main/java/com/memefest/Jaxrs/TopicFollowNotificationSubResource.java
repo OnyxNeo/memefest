@@ -39,8 +39,8 @@ public class TopicFollowNotificationSubResource extends Resource{
     @RolesAllowed({"User","Admin"})
     public Response getTopicFollowNotification(@DefaultValue("false") @MatrixParam("Seen") boolean seen,
                                                     @MatrixParam("TopicTitle") String title){
-        TopicJSON topic = new TopicJSON(0, title, null, null, null, null);
-        TopicFollowNotificationJSON topicFollowNot = new TopicFollowNotificationJSON(0, topic, null, 
+        TopicJSON topic = new TopicJSON(null, title, null, null, null, null);
+        TopicFollowNotificationJSON topicFollowNot = new TopicFollowNotificationJSON(null, topic, null, 
                             new UserJSON(context.getUserPrincipal().getName()), seen); 
         Set<TopicFollowNotificationJSON> results = notOps.getTopicFollowNotificationInfo(topicFollowNot);
         StringBuilder builder = new StringBuilder("[");

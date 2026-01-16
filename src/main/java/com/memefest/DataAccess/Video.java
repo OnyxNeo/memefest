@@ -1,4 +1,6 @@
-    package com.memefest.DataAccess;
+package com.memefest.DataAccess;
+
+import java.util.Set;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -13,7 +15,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedNativeQueries;
 import jakarta.persistence.NamedNativeQuery;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
@@ -30,11 +32,11 @@ import jakarta.persistence.Table;
         name = "VideoEntityMapping",
         entities = {
             @EntityResult(
-                entityClass = TopicPost.class,
+                entityClass = Video.class,
                 fields = {
                     @FieldResult(name = "vidId", column = "Vid_Id"),
-                    @FieldResult(name = "vidTitle", column = "Vid_Title"),
-                    @FieldResult(name = "vidPath", column = "Vid_Path")
+                    //@FieldResult(name = "vidTitle", column = "Vid_Title"),
+                    @FieldResult(name = "vidUrl", column = "Vid_Path")
                 }
             )
         }
@@ -47,7 +49,8 @@ public class Video {
     @Id
     @Column(name = "Vid_Id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int vidId;
+    //@UuidGenerator
+    private Long vidId;
     /* 
     @Column(name = "Vid_Description")
     private String vidDescription;
@@ -65,22 +68,19 @@ public class Video {
     @OneToOne(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "video", optional =  true)
     private PostVideo post;
     */
-    @OneToOne(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "video", optional =  true)
-    private EventVideo event;
-
+    @OneToMany(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "video")
+    private Set<EventVideo> event;
     
     @Column(name = "Vid_Path")
     private String vidUrl;
 
-    public int getVid_Id() {
+    public Long getVid_Id() {
         return this.vidId;
     }
 
-    public void setVid_Id(int vidId) {
+    public void setVid_Id(Long vidId) {
         this.vidId = vidId;
     }
-
-
 
     public User getUser(){
         return this.user;

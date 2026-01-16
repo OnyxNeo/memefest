@@ -3,6 +3,7 @@ package com.memefest.DataAccess;
 import java.util.Date;
 import java.util.Set;
 
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,32 +36,32 @@ import jakarta.persistence.Table;
         name = "Event.getEventByTitle", 
         query = "SELECT TOP(1) E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created , E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Event_Title LIKE CONCAT(CONCAT('%', ?), '%')",
+            +"as venue, E.Likes as likes FROM EVENT_INFO E WHERE E.Event_Title LIKE CONCAT(CONCAT('%', ?), '%')",
         resultSetMapping = "EventEntityMapping"),
     @NamedNativeQuery(
         name = "Event.searchByTitle", 
         query = "SELECT E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created , E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Event_Title LIKE CONCAT(CONCAT('%', ?), '%')",
+            +"as venue, E.Likes as likes FROM EVENT_INFO E WHERE E.Event_Title LIKE CONCAT(CONCAT('%', ?), '%')",
         resultSetMapping = "EventEntityMapping"),
     @NamedNativeQuery(
         name = "Event.searchByPostedBy",
         query = "SELECT E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created, E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Posted_By = ?",    
+            +"as venue, E.Likes as likes FROM EVENT_INFO E WHERE E.Posted_By = ?",    
         resultSetMapping =  "EventEntityMapping"),
     @NamedNativeQuery(
         name = "Event.searchByVenue",
         query = "SELECT E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created, E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Event_Venue LIKE CONCAT(CONCAT('%', ?),'%')",
+            +"as venue, E.Likes as likes FROM EVENT_INFO E WHERE E.Event_Venue LIKE CONCAT(CONCAT('%', ?),'%')",
         resultSetMapping = "EventEntityMapping"
     ),
     @NamedNativeQuery(
         name = "Event.searchByVenue&Title",
         query = "SELECT E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created, E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Event_Venue LIKE CONCAT(CONCAT('%', ?),'%') AND E.Event_Title LIKE "
+            +"as venue, E.Likes as likes FROM EVENT_INFO E WHERE E.Event_Venue LIKE CONCAT(CONCAT('%', ?),'%') AND E.Event_Title LIKE "
             +"CONCAT(CONCAT('%', ?),'%')",
         resultSetMapping = "EventEntityMapping"
     ),
@@ -68,14 +69,14 @@ import jakarta.persistence.Table;
         name = "Event.searchByVenue&PostedBy",
         query = "SELECT E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created, E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Event_Venue LIKE CONCAT(CONCAT('%', ?), '%') AND E.Posted_By = ?",
+            +"as venue E.Likes as likes FROM EVENT_INFO E WHERE E.Event_Venue LIKE CONCAT(CONCAT('%', ?), '%') AND E.Posted_By = ?",
         resultSetMapping = "EventEntityMapping"
     ),
     @NamedNativeQuery(
         name = "Event.searchByPostedBy&Title",
         query =  "SELECT E.Event_Id as eventId, E.Event_Title as eventTitle, E.Date_Posted as created, E.Event_Description "
             +"as description, E.Event_Date as eventDate, E.Event_Pin as eventPin, E.Posted_By as postedBy, E.Event_Venue "
-            +"as venue FROM EVENT_INFO E WHERE E.Event_Title LIKE CONCAT(CONCAT('%', ?), '%') AND E.Posted_By = ?",
+            +"as venue, E.Likes as likes FROM EVENT_INFO E WHERE E.Event_Title LIKE CONCAT(CONCAT('%', ?), '%') AND E.Posted_By = ?",
         resultSetMapping = "EventEntityMapping"
     )
 })
@@ -86,6 +87,7 @@ import jakarta.persistence.Table;
                         @FieldResult(name = "eventTitle", column = "eventTitle"), 
                         @FieldResult(name = "date", column = "eventDate"), 
                         @FieldResult(name = "datePosted", column = "created"),
+                        @FieldResult(name = "likes", column =  "likes"),
                         @FieldResult(name = "eventDesc", column = "description"),
                         @FieldResult(name = "eventPin", column = "eventPin"),
                         @FieldResult(name = "userId", column = "postedBy"),
@@ -100,7 +102,8 @@ public class Event {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Event_Id")
-    private int eventId;
+    //@UuidGenerator
+    private Long eventId;
 
     @Column(name = "Event_Title")
     private String eventTitle;
@@ -118,21 +121,24 @@ public class Event {
     private String eventPin;
 
     @Column(name = "Posted_By", insertable =  false, updatable = false)
-    private int userId;
+    private Long userId;
 
     @Column(name = "Event_Venue")
     private String venue;
 
+    @Column(name = "Likes")
+    private int likes;
+
     @OneToMany(mappedBy = "event", cascade = {CascadeType.PERSIST}, fetch = FetchType.LAZY)
-    @JoinColumn(name = "Event_Id")
+    //@JoinColumn(name = "Event_Id")
     private Set<EventVideo> videos;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, mappedBy = "event")
-    @JoinColumn(name = "Event_Id")
+    //@JoinColumn(name = "Event_Id")
     private Set<EventImage> images;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, mappedBy = "event")
-    @JoinColumn(referencedColumnName = "Event_Id")
+    //@JoinColumn(referencedColumnName = "Event_Id")
     private Set<EventPost> posts;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -140,15 +146,15 @@ public class Event {
     private User user;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, mappedBy = "event")
-    @JoinColumn(name = "Event_Id")
+    //@JoinColumn(name = "Event_Id")
     private Set<EventPostNotification> eventPostNotifications;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, mappedBy = "event")
-    @JoinColumn(name = "Event_Id")
+    //@JoinColumn(name = "Event_Id")
     private Set<EventNotification> eventNotifications;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, mappedBy = "event")
-    @JoinColumn(name = "Event_Id")
+    //@JoinColumn(name = "Event_Id")
     private Set<EventCategory> categories;
 
     public Set<EventPostNotification> getEventPostNotifications(){
@@ -167,11 +173,11 @@ public class Event {
         this.eventNotifications = eventNotifications;
     }
 
-    public int getEvent_Id() {
+    public Long getEvent_Id() {
         return this.eventId;
     }
 
-    public void setEvent_Id(int eventId) {
+    public void setEvent_Id(Long eventId) {
         this.eventId = eventId;
     }
 
@@ -240,16 +246,28 @@ public class Event {
         return this.user;
     }
 
-    public int getPosted_By(){
+    public Long getPosted_By(){
         return this.userId;
     }
 
-    public void setPosted_By(int postedBy){
+    public void setPosted_By(Long postedBy){
         this.userId = postedBy;
     }
 
     public Set<EventPost> getPosts() {
         return this.posts;
+    }
+
+    public int getLikes(){
+        return this.likes;
+    }
+
+    public void setLikes(int likes){
+        this.likes = likes;
+    }
+
+    public void addLikes(){
+        this.setLikes((getLikes() + 1));
     }
 
 /* */

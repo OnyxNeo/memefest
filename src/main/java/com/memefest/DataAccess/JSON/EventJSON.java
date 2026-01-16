@@ -15,78 +15,82 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.memefest.DataAccess.JSON.Deserialize.CustomLocalDateTimeDeserializer;
 import com.memefest.DataAccess.JSON.Serialize.CustomLocalDateTimeSerializer;
 
-@JsonRootName("Event")
-@JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "EventID")
-@JsonFilter("EventPublicView")
+@JsonRootName("event")
+@JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "eventId")
+@JsonFilter("EventView")
 public class EventJSON implements Serializable{
     
-    @JsonProperty("EventID")
-    private int eventID;
+    @JsonProperty("eventId")
+    private Long eventID;
 
-    @JsonProperty("EventTitle")
+    @JsonProperty("title")
     private String eventTitle;
 
-    @JsonProperty("EventDescription")
+    @JsonProperty("description")
     private String eventDescription; 
 
-    @JsonProperty("EventPin")
+    @JsonProperty("eventPin")
     private String eventPin;
 
-    @JsonProperty("EventVenue")
+    @JsonProperty("venue")
     private String eventVenue;
 
-    @JsonProperty("EventDate")
+    @JsonProperty("price")
+    private int eventPrice;
+
+    @JsonProperty("timestamp")
     @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
     @JsonSerialize(using = CustomLocalDateTimeSerializer.class)
     private LocalDateTime eventDate;
 
-    @JsonProperty("Posters")
+    @JsonProperty("imageUrls")
     private Set<ImageJSON> posters;
 
-    @JsonProperty("Clips")
+    @JsonProperty("clips")
     private Set<VideoJSON> clips;
 
-    @JsonProperty("Posts")
+    @JsonProperty("posts")
     private Set<EventPostJSON> posts;
 
-    @JsonProperty("PostedBy")
+    @JsonProperty("postedBy")
     private UserJSON user;
 
-    @JsonProperty("DatePosted")
+    @JsonProperty("createdAt")
     @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
     @JsonSerialize(using = CustomLocalDateTimeSerializer.class)
     private LocalDateTime datePosted;
 
-    @JsonProperty("Categories")
+    @JsonProperty("categories")
     private Set<CategoryJSON> categories;
 
-    @JsonProperty("CanceledCategories")
+    @JsonProperty("canceledCategories")
     private Set<CategoryJSON> canceledCats;
 
-    @JsonProperty("CanceledImages")
+    @JsonProperty("canceledImages")
     private Set<ImageJSON> canceledImages;
 
-    @JsonProperty("CanceledClips")
+    @JsonProperty("canceledClips")
     private Set<VideoJSON> canceledClips;
 
-    @JsonProperty("IsCanceled")
+    @JsonProperty("isCanceled")
     private boolean isCanceled;
     @JsonCreator
-    public EventJSON(@JsonProperty("EventID") int eventID,
-                        @JsonProperty("EventTitle") String eventTitle, 
-                            @JsonProperty("EventDescription") String eventDescription,
-                                @JsonProperty("EventPin") String eventPin, 
-                                    @JsonProperty("EventDate") LocalDateTime eventDate,
-                                        @JsonProperty("DatePosted") LocalDateTime datePosted,
-                                            @JsonProperty("Clips") Set<VideoJSON> clips,
-                                                @JsonProperty("Posters") Set<ImageJSON> posters,
-                                                    @JsonProperty("Posts") Set<EventPostJSON> posts,
-                                                        @JsonProperty("CanceledImages") Set<ImageJSON> canceledImages,
-                                                            @JsonProperty("CanceledClips") Set<VideoJSON> canceledClips,                                                   
-                                                            @JsonProperty("EventVenue") String eventVenue,
-                                                                @JsonProperty("PostedBy") UserJSON user,
-                                                                @JsonProperty("Categories") Set<CategoryJSON> categories,
-                                                                @JsonProperty("CanceledCategories") Set<CategoryJSON> canceledCategories){
+    public EventJSON(@JsonProperty("eventId") Long eventID,
+                        @JsonProperty("title") String eventTitle, 
+                            @JsonProperty("description") String eventDescription,
+                                @JsonProperty("eventPin") String eventPin, 
+                                    @JsonProperty("timestamp") LocalDateTime eventDate,
+                                        @JsonProperty("createdAt") LocalDateTime datePosted,
+                                            @JsonProperty("clips") Set<VideoJSON> clips,
+                                                @JsonProperty("imageUrls") Set<ImageJSON> posters,
+                                                    @JsonProperty("posts") Set<EventPostJSON> posts,
+                                                        @JsonProperty("canceledImages") Set<ImageJSON> canceledImages,
+                                                            @JsonProperty("canceledClips") Set<VideoJSON> canceledClips,                                                   
+                                                            @JsonProperty("venue") String eventVenue,
+                                                                @JsonProperty("postedBy") UserJSON user,
+                                                                @JsonProperty("categories") Set<CategoryJSON> categories,
+                                                                @JsonProperty("canceledCategories") Set<CategoryJSON> canceledCategories,
+                                                                @JsonProperty("price") int price){
         this.eventID = eventID;
         this.eventTitle = eventTitle;
         this.eventDescription = eventDescription;
@@ -105,11 +109,11 @@ public class EventJSON implements Serializable{
         this.canceledCats = canceledCategories;
     }
 
-    public int getEventID() {
+    public Long getEventID() {
         return this.eventID;
     }
 
-    public void setEventID(int eventID) {
+    public void setEventID(Long eventID) {
         this.eventID = eventID;
     }
 
@@ -156,11 +160,11 @@ public class EventJSON implements Serializable{
         this.clips = clips;
     }
 
-    public Set<ImageJSON> getPosters(){
+    public Set<ImageJSON> getImageUrls(){
         return this.posters;
     }
 
-    public void setPosters(Set<ImageJSON> posters){
+    public void setImageUrls(Set<ImageJSON> posters){
         this.posters = posters;
     }
 

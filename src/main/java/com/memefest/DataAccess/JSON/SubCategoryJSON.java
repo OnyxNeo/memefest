@@ -13,7 +13,7 @@ public class SubCategoryJSON extends CategoryJSON {
   //@JsonProperty("MainCategory")
   //private CategoryJSON mainCategory;
   
-  public SubCategoryJSON(@JsonProperty("CatId") int categoryId, @JsonProperty("CatName") String categoryName,
+  public SubCategoryJSON(@JsonProperty("CatId") Long categoryId, @JsonProperty("CatName") String categoryName,
                           //@JsonProperty("MainCategory") CategoryJSON mainCategory,
                            @JsonProperty("Topics") Set<TopicJSON> topics, 
                             @JsonProperty("ParentCategories") Set<CategoryJSON> parentCategories,

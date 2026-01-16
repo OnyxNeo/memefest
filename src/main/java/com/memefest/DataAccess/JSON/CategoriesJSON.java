@@ -7,15 +7,15 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class CategoriesJSON{
 
-    @JsonProperty("Categories")
+    @JsonProperty("categories")
     private Set<CategoryJSON> categories;
     
     @JsonCreator
-    public CategoriesJSON(@JsonProperty("Categories") Set<CategoryJSON> categories) {
+    public CategoriesJSON(@JsonProperty("categories") Set<CategoryJSON> categories) {
         this.categories = categories;
     }
 
-    @JsonProperty("Categories")
+    @JsonProperty("categories")
     public Set<CategoryJSON> getCategories() {
         return this.categories;
     }

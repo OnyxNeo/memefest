@@ -1,30 +1,29 @@
 package com.memefest.DataAccess;
 
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
 @Embeddable
 public class EventPostId {
     @Column(name = "Event_Id", nullable = false, updatable = false, insertable = false)
-    private int eventId;
+    private Long eventId;
     
     @Column(name = "Post_Id", nullable = false, updatable = false, insertable = false)
-    private int postId;
+    private Long postId;
     
-    public int getEvent_Id() {
+    public Long getEvent_Id() {
         return this.eventId;
     }
     
-    public void setEvent_Id(int eventId) {
+    public void setEvent_Id(Long eventId) {
         this.eventId = eventId;
     }
     
-    public int getPost_Id() {
+    public Long getPost_Id() {
         return this.postId;
     }
     
-    public void setPost_Id(int postId) {
+    public void setPost_Id(Long postId) {
         this.postId = postId;
     }    
 }

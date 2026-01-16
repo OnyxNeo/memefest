@@ -6,7 +6,6 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
@@ -44,15 +43,15 @@ public class TopicPostNotification {
     private boolean seen;
 
     @ManyToOne(cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "Topic_Id", referencedColumnName = "Topic_Id")
+    @JoinColumn(name = "Topic_Id")
     private Topic topic;
 
     @ManyToOne(cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "Post_Id", referencedColumnName = "Post_Id")
+    @JoinColumn(name = "Post_Id")
     private Post post;
 
     @ManyToOne(cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "UserId", referencedColumnName = "UserId")
+    @JoinColumn(name = "UserId")
     private User user;
 
 
@@ -65,11 +64,11 @@ public class TopicPostNotification {
         this.topicPostNot.setTopic_Id(topic.getTopic_Id());
     }
 
-    public void setTopic_Id(int topicId){
+    public void setTopic_Id(Long topicId){
         this.topicPostNot.setTopic_Id(topicId);
     }
 
-    public int getTopic_Id(){
+    public Long getTopic_Id(){
         return this.topicPostNot.getTopic_Id();
     }
 
@@ -82,11 +81,11 @@ public class TopicPostNotification {
         this.topicPostNot.setUserId(user.getUserId());
     }
 
-    public int getUserId(){
+    public Long getUserId(){
         return this.topicPostNot.getUserId();
     }
 
-    public void setUserId(int userId){
+    public void setUserId(Long userId){
         this.topicPostNot.setUserId(userId);
     }
 
@@ -99,11 +98,11 @@ public class TopicPostNotification {
         this.topicPostNot.setPost_Id(post.getPost_Id());
     }
 
-    public int getPost_Id(){
+    public Long getPost_Id(){
         return this.topicPostNot.getPost_Id();
     }
 
-    public void setPost_Id(int postId){
+    public void setPost_Id(Long postId){
         this.topicPostNot.setPost_Id(postId);
     }
 
@@ -115,7 +114,6 @@ public class TopicPostNotification {
         return this.created;
     }
 
-    
     public boolean getSeen(){
         return this.seen;
     }

@@ -45,9 +45,9 @@ public class TopicPostNotificationSubResource  extends Resource{
                                                             @MatrixParam("Comment") String comment,
                                                                 @MatrixParam("Username") String username){
         UserJSON user = new UserJSON(username);
-        TopicJSON topic = new TopicJSON(0, topicTitle, null, null, null, null);
-        TopicPostJSON topicPost = new TopicPostJSON(0, comment, null, 0, 0, user, topic, null, null);                                            
-        TopicPostNotificationJSON topicPostNot = new TopicPostNotificationJSON(0, topicPost, null,
+        TopicJSON topic = new TopicJSON(null, topicTitle, null, null, null, null);
+        TopicPostJSON topicPost = new TopicPostJSON(null, comment, null, 0, 0, user, topic, null, null, null);                                            
+        TopicPostNotificationJSON topicPostNot = new TopicPostNotificationJSON(null, topicPost, null,
                                     new UserJSON(context.getUserPrincipal().getName()), seen);
         Set<TopicPostNotificationJSON> results = notOps.getTopicPostNotificationInfo(topicPostNot);
         ListIterator<TopicPostNotificationJSON> iterator = results.stream().collect(Collectors.toList()).listIterator();

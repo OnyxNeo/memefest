@@ -1,14 +1,13 @@
 package com.memefest.DataAccess;
 
+
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @NamedQueries({
@@ -34,19 +33,19 @@ public class PostCategory {
   @JoinColumn(name= "Cat_Id", referencedColumnName ="Cat_Id")
   private Category category;
   
-  public int getPost_Id() {
+  public Long getPost_Id() {
     return this.postCatId.getPost_Id();
   }
 
-  public void setPost_Id(int postId){
+  public void setPost_Id(Long postId){
     this.postCatId.setPost_Id(postId);
   }
   
-  public void setCat_Id(int catId) {
+  public void setCat_Id(Long catId) {
     this.postCatId.setCat_Id(catId);
   }
 
-  public int getCat_Id(){
+  public Long getCat_Id(){
     return this.postCatId.getCat_Id();
   }
 

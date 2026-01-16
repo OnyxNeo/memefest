@@ -63,19 +63,19 @@ public class PostNotification {
         this.user = user;
     }
 
-    public void setPost_Id(int postId) {
+    public void setPost_Id(Long postId) {
         this.id.setPost_Id(postId);
     }
 
-    public int getUserId() {
+    public Long getUserId() {
         return this.id.getUserId();
     }
 
-    public int getPost_Id(){
+    public Long getPost_Id(){
         return this.id.getPost_Id();
     }
 
-    public void setUserId(int userId) {
+    public void setUserId(Long userId) {
         this.id.setUserId(userId);
     }
 

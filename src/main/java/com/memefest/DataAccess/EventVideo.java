@@ -1,7 +1,7 @@
 package com.memefest.DataAccess;
 
+
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -33,15 +33,15 @@ public class EventVideo{
   @JoinColumn(name= "Event_Id", referencedColumnName ="Event_Id")
   private Event event;
   
-  public int getVid_Id() {
+  public Long getVid_Id() {
     return this.eventVidId.getVid_Id();
   }
 
-  public void setVid_Id(int postId){
+  public void setVid_Id(Long postId){
     this.eventVidId.setVid_Id(postId);
   }
   
-  public void setEvent_Id(int imgId) {
+  public void setEvent_Id(Long imgId) {
     this.eventVidId.setEvent_Id(imgId);
   }
 

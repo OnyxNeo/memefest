@@ -1,5 +1,0 @@
-<persistence>
-    <persistence-unit name="memeFest" transaction-type="JTA">
-        <jta-data-source>java:app/jndi/memefest/dataSourcessde</jta-data-source>
-    </persistence-unit>
-</persistence>

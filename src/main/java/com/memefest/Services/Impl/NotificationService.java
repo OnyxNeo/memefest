@@ -3,9 +3,21 @@ package com.memefest.Services.Impl;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
+import org.eclipse.persistence.config.PersistenceUnitProperties;
+import org.eclipse.persistence.config.TargetServer;
+import org.eclipse.persistence.internal.jpa.config.persistenceunit.PersistenceUnitImpl;
+import org.eclipse.persistence.jpa.PersistenceProvider;
 
 import com.memefest.DataAccess.Event;
 import com.memefest.DataAccess.EventNotification;
@@ -24,7 +36,8 @@ import com.memefest.DataAccess.TopicFollowNotificationId;
 import com.memefest.DataAccess.TopicPost;
 import com.memefest.DataAccess.TopicPostNotification;
 import com.memefest.DataAccess.TopicPostNotificationId;
-import com.memefest.DataAccess.User;import com.memefest.DataAccess.JSON.EventJSON;
+import com.memefest.DataAccess.User;
+import com.memefest.DataAccess.JSON.EventJSON;
 import com.memefest.DataAccess.JSON.EventNotificationJSON;
 import com.memefest.DataAccess.JSON.EventPostJSON;
 import com.memefest.DataAccess.JSON.EventPostNotificationJSON;
@@ -37,12 +50,14 @@ import com.memefest.DataAccess.JSON.TopicPostNotificationJSON;
 import com.memefest.DataAccess.JSON.UserFollowNotificationJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.Services.EventOperations;
-import com.memefest.Services.FeedsOperations;
 import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.PostOperations;
 import com.memefest.Services.TopicOperations;
 import com.memefest.Services.UserOperations;
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.ejb.EJB;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
@@ -50,17 +65,15 @@ import jakarta.ejb.TransactionAttributeType;
 import jakarta.ejb.TransactionManagement;
 import jakarta.ejb.TransactionManagementType;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.PersistenceContextType;
+import jakarta.persistence.spi.PersistenceUnitTransactionType;
+import jakarta.transaction.TransactionScoped;
 
 @TransactionManagement(TransactionManagementType.CONTAINER)
 @Stateless(name = "NotificationService")
 public class NotificationService implements NotificationOperations{
     
-    @PersistenceContext(unitName = "memeFest", type = PersistenceContextType.TRANSACTION)
-    private EntityManager entityManager;
-
     @EJB
     private PostOperations postOps;
     
@@ -72,9 +85,128 @@ public class NotificationService implements NotificationOperations{
 
     @EJB
     private EventOperations eventOps;
+    
+    private EntityManagerFactory factory;
 
-    @EJB 
-    private FeedsOperations feedsOps;
+    @TransactionScoped
+    private EntityManager entityManager;
+
+
+    @PostConstruct
+    public void init(){        
+        
+        String databaseName = "Memefest";
+        String serverName = "CHHUMBUCKET";
+        String instanceName = "MSSQLSERVER";
+        String username = "Neutron";
+        String password = "ScoobyDoo24";
+        String encrypt = "false";
+        int portNumber = 1433;
+        boolean trustServerCertificate = true;
+
+        String dataSourceName = "DataSource/NotificationService";
+        String unitName = "NotificationServicePersistenceUnit";  
+        
+        SQLServerDataSource ssDataSource = new SQLServerDataSource();
+        ssDataSource.setDatabaseName(databaseName);
+        ssDataSource.setTrustServerCertificate(trustServerCertificate);
+        ssDataSource.setServerName(serverName);
+        ssDataSource.setInstanceName(instanceName);
+        ssDataSource.setUser(username);
+        ssDataSource.setPassword(password);
+        ssDataSource.setPortNumber(portNumber);
+        ssDataSource.setEncrypt(encrypt);
+        try{
+            Context context = new InitialContext();   
+            try {
+
+                context.rebind(dataSourceName, (DataSource) ssDataSource);
+            }catch (NamingException e) {
+                try {
+                    context.bind(dataSourceName,(DataSource) ssDataSource);
+                //ssDataSource = (DataSource) context.lookup("DataSource/Memefest");
+                } catch (NamingException ec) {
+                    throw new RuntimeException(ec);
+                }
+            }
+        }catch(NamingException ex){
+            throw new RuntimeException(ex);
+        }
+            Map<String, Object> memeProps = new HashMap<>();
+            memeProps.put(PersistenceUnitProperties.TRANSACTION_TYPE, PersistenceUnitTransactionType.JTA.name());
+            memeProps.put(PersistenceUnitProperties.TARGET_SERVER, TargetServer.None);
+            memeProps.put(PersistenceUnitProperties.JDBC_USER, username);
+            memeProps.put(PersistenceUnitProperties.JDBC_PASSWORD, password);
+            //memeProps.put(PersistenceUnitProperties.CONNECTION_POOL_JTA_DATA_SOURCE, "DataSource/Memefest");
+            memeProps.put(PersistenceUnitProperties.JTA_DATASOURCE, dataSourceName);
+            memeProps.put(PersistenceUnitProperties.ECLIPSELINK_PERSISTENCE_UNITS, unitName);
+            memeProps.put(PersistenceUnitProperties.JDBC_DRIVER, "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+            PersistenceProvider provider = new PersistenceProvider();
+
+            org.eclipse.persistence.jpa.config.PersistenceUnit unit = new PersistenceUnitImpl(unitName);
+            unit.setProvider("org.eclipse.persistence.jpa.PersistenceProvider");
+        //unit.setJtaDataSource("DataSource/Memefest" );
+
+        unit.setClass("com.memefest.DataAccess.UserSecurity");
+        unit.setClass("com.memefest.DataAccess.CategoryFollower");
+        unit.setClass("com.memefest.DataAccess.Category");
+        unit.setClass("com.memefest.DataAccess.Event");
+        unit.setClass("com.memefest.DataAccess.EventCategory");
+        unit.setClass("com.memefest.DataAccess.EventImage");
+        unit.setClass("com.memefest.DataAccess.EventNotification");
+        unit.setClass("com.memefest.DataAccess.EventPost");
+        unit.setClass("com.memefest.DataAccess.EventPostNotification");
+        unit.setClass("com.memefest.DataAccess.EventVideo");
+        unit.setClass("com.memefest.DataAccess.FollowNotification");
+        unit.setClass("com.memefest.DataAccess.Image");
+        unit.setClass("com.memefest.DataAccess.Post");
+        unit.setClass("com.memefest.DataAccess.PostCategory");
+        unit.setClass("com.memefest.DataAccess.PostImage");
+        unit.setClass("com.memefest.DataAccess.PostNotification");
+        unit.setClass("com.memefest.DataAccess.PostReply");
+        unit.setClass("com.memefest.DataAccess.PostVideo");
+        unit.setClass("com.memefest.DataAccess.JokeOfDay");
+        unit.setClass("com.memefest.DataAccess.Sponsor");
+        unit.setClass("com.memefest.DataAccess.JokeOfDayPost");
+        unit.setClass("com.memefest.DataAccess.PostTaggedUser");
+        unit.setClass("com.memefest.DataAccess.RepostTaggedUser");
+        unit.setClass("com.memefest.DataAccess.Interact");
+        unit.setClass("com.memefest.DataAccess.Repost");
+        unit.setClass("com.memefest.DataAccess.SubCategory");
+        unit.setClass("com.memefest.DataAccess.Topic");
+        unit.setClass("com.memefest.DataAccess.TopicCategory");
+        unit.setClass("com.memefest.DataAccess.TopicFollower");
+        unit.setClass("com.memefest.DataAccess.TopicFollowNotification");
+        unit.setClass("com.memefest.DataAccess.TopicImage");
+        unit.setClass("com.memefest.DataAccess.TopicPost");
+        unit.setClass("com.memefest.DataAccess.TopicPostNotification");
+        unit.setClass("com.memefest.DataAccess.TopicVideo");
+        unit.setClass("com.memefest.DataAccess.User");
+        unit.setClass("com.memefest.DataAccess.UserAdmin");
+        unit.setClass("com.memefest.DataAccess.UserFollower");
+        unit.setClass("com.memefest.DataAccess.Video");
+
+        unit.setExcludeUnlistedClasses(false);
+        //unit.setName("Memefest");
+        unit.setTransactionType(PersistenceUnitTransactionType.JTA);     
+        unit.setName(unitName);
+        unit.setJtaDataSource(dataSourceName);
+        //PersistenceProvider provider = new PersistenceProvider();
+        //persistenceUnit.setExcludeUnlistedClasses(false);
+        //persistenceUnit.getPersistenceUnitInfo().
+        this.factory = provider.createContainerEntityManagerFactory(unit.getPersistenceUnitInfo(), memeProps);
+        //EntityManagerFactoryWrapper wrapper = new EntityManagerFactoryWrapper(factory
+
+        this.entityManager = factory.createEntityManager();
+            //entityManager.joinTransaction();
+      
+    }
+
+    @PreDestroy
+    public void destroy(){
+        factory.close();
+        entityManager.close();
+    }      
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //throw a custom exception to show object was not created
@@ -87,8 +219,6 @@ public class NotificationService implements NotificationOperations{
             topicPostNot.setTopic(topicPost.getTopic());
             topicPostNot.setSeen(false);
             entityManager.persist(topicPost);
-
-            feedsOps.sendToUsers(topicPostNot);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -103,8 +233,6 @@ public class NotificationService implements NotificationOperations{
         followNot.setUserId(user.getUserId());
         followNot.setSeen(false);
         entityManager.persist(followNot);
-        
-        feedsOps.sendToAll(userFollowNot);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -118,7 +246,6 @@ public class NotificationService implements NotificationOperations{
         followNot.setUserId(user.getUserId());
         followNot.setSeen(false);
         entityManager.persist(followNot);
-        feedsOps.sendToAll(topicFollowNot);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -202,6 +329,7 @@ public class NotificationService implements NotificationOperations{
 
     @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public TopicFollowNotification getTopicFollowNotificationEntity(TopicFollowNotificationJSON topicFollowNot) throws NoResultException{
+        
         if(topicFollowNot != null){
             if(topicFollowNot.getUser() != null && topicFollowNot.getTopic() != null){
                 User user = userOps.getUserEntity(topicFollowNot.getUser());
@@ -387,7 +515,6 @@ public class NotificationService implements NotificationOperations{
         eventPostNot.setPost(eventPost.getPost());
         eventPostNot.setUser(user);
         entityManager.persist(eventPostNot);
-        feedsOps.sendToAll(eventPostNot);
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
@@ -464,9 +591,11 @@ public class NotificationService implements NotificationOperations{
                 topicFollowers = Collections.singleton (this.entityManager.find(TopicFollowNotification.class, topicFollowNotificationId));
             }
            return topicFollowers.stream().map(topicFollower ->{
-            return new TopicFollowNotificationJSON(0, new TopicJSON(topicFollower.getTopic_Id(), null, null, null, null, null),
+
+            return new TopicFollowNotificationJSON(null, new TopicJSON(topicFollower.getTopic_Id(), null, null, null, null, null),
                         null,
-                        new UserJSON(topicFollower.getUser().getUsername()),false);
+                        new UserJSON(null, null, topicFollower.getUser().getUsername(), 0, false,
+                                         null, null, null, null, null, null),false);
            }).collect(Collectors.toSet());
         }
         else 
@@ -508,9 +637,12 @@ public class NotificationService implements NotificationOperations{
             }
 
             return userFollowers.stream().map(topicFollower ->{
-             return new UserFollowNotificationJSON(0, new UserJSON(topicFollower.getUser().getUsername()),
-                         null, 
-                         new UserJSON(topicFollower.getFollower().getUsername()), userFollowNotification.getSeen());
+             return new UserFollowNotificationJSON(null, 
+                        new UserJSON(null, null, topicFollower.getUser().getUsername(), 0, 
+                            false, null, null, null, null, null, null),
+                        null, 
+                        new UserJSON(null, null, topicFollower.getFollower().getUsername(), 0,
+                             false, null, null, null, null, null, null), userFollowNotification.getSeen());
             }).collect(Collectors.toSet());
          }
          else 
@@ -526,9 +658,9 @@ public class NotificationService implements NotificationOperations{
                                         .getResultStream();
                 
                 return  query.map(eventNotInst ->{
-                                return new EventNotificationJSON(0, LocalDateTime.ofInstant(eventNotInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                                            new EventJSON(eventNotInst.getEvent_Id(), null, null,null, null, null, null, null, null, null, null, null, null, null,null),
-                                                                new UserJSON(eventNotInst.getUserId(), null), eventNotInst.getSeen());
+                                return new EventNotificationJSON(null, LocalDateTime.ofInstant(eventNotInst.getCreated().toInstant(), ZoneId.systemDefault()), 
+                                                            new EventJSON(eventNotInst.getEvent_Id(), null, null,null, null, null, null, null, null, null, null, null, null, null,null, 0),
+                                                                new UserJSON(eventNotInst.getUserId(), null, null, 0, false, null, null, null, null, null, null), eventNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else if(eventNotification.getEvent() == null && eventNotification.getUser() != null){
@@ -538,16 +670,18 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return  query.map(eventNotInst ->{
-                                return new EventNotificationJSON(0, LocalDateTime.ofInstant(eventNotInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                    new EventJSON(eventNotInst.getEvent_Id(), null, null, null, null,null ,null, null, null, null, null, null, null, null,null),
-                                        new UserJSON(eventNotInst.getUserId(), null), eventNotInst.getSeen());
+                                return new EventNotificationJSON(null, LocalDateTime.ofInstant(eventNotInst.getCreated().toInstant(), ZoneId.systemDefault()), 
+                                    new EventJSON(eventNotInst.getEvent_Id(), null, null, null, null,null ,null, null, null, null, null, null, null, null,null, 0),
+                                        new UserJSON(eventNotInst.getUserId(), null, null, 0, 
+                                            false, null, null, null, null, null, null),
+                                         eventNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else{
             EventNotification eventNotEntity = getEventNotificationEntity(eventNotification);
-                    return Collections.singleton(new EventNotificationJSON(0, LocalDateTime.ofInstant(eventNotEntity.getCreated().toInstant(), ZoneId.systemDefault()), 
-                        new EventJSON(eventNotEntity.getEvent_Id(), null, null, null, null,null , null, null, null, null, null, null, null, null, null),
-                            new UserJSON(eventNotEntity.getUserId(), null), eventNotEntity.getSeen()));
+                    return Collections.singleton(new EventNotificationJSON(null, LocalDateTime.ofInstant(eventNotEntity.getCreated().toInstant(), ZoneId.systemDefault()), 
+                        new EventJSON(eventNotEntity.getEvent_Id(), null, null, null, null,null , null, null, null, null, null, null, null, null, null, 0),
+                            new UserJSON(eventNotEntity.getUserId(), null, null, 0, false, null, null, null, null, null, null), eventNotEntity.getSeen()));
         }
     }
 
@@ -559,10 +693,11 @@ public class NotificationService implements NotificationOperations{
                                         .setParameter("seen", eventPostNotification.getSeen())
                                         .getResultStream();             
                 return  query.map(eventPostNotInst ->{
-                                return new EventPostNotificationJSON(0,  
-                                                                new EventPostJSON(eventPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null ,null),
+                                return new EventPostNotificationJSON(null,  
+                                                                new EventPostJSON(eventPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null ,null, null),
                                                                  LocalDateTime.ofInstant(eventPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),
-                                                                new UserJSON(eventPostNotInst.getUserId(), null), eventPostNotInst.getSeen());
+                                                                    new UserJSON(eventPostNotInst.getUserId(), null, null, 0, false, null, null, null, null, null, null),
+                                                                 eventPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else if(eventPostNotification.getPost() == null && eventPostNotification.getEventPost().getEvent() == null && eventPostNotification.getUser() != null){
@@ -572,11 +707,12 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return  query.map(eventPostNotInst ->{
-                                return new EventPostNotificationJSON(0,  
+                                return new EventPostNotificationJSON(null,  
                                     new EventPostJSON(eventPostNotInst.getPost_Id(), null,null, 0, 0, null, 
-                                           new EventJSON(eventPostNotInst.getEvent_Id(), null,null,null,null,null,null,null,null,null,null,null,null, null, null), null, null),
+                                           new EventJSON(eventPostNotInst.getEvent_Id(), null,null,null,null,null,null,null,null,null,null,null,null, null, null, 0), null, null, null),
                                             LocalDateTime.ofInstant(eventPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),    
-                                    new UserJSON(eventPostNotInst.getUserId(), null),eventPostNotInst.getSeen());
+                                    new UserJSON(eventPostNotInst.getUserId(), null, null, 0, false, null, null, null, null, null, null),
+                                    eventPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         
@@ -587,11 +723,13 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return  query.map(eventPostNotInst ->{
-                                return new EventPostNotificationJSON(0,  
+                                return new EventPostNotificationJSON(null,  
                                     new EventPostJSON(eventPostNotInst.getPost_Id(), null,null, 0, 0, null, 
-                                           new EventJSON(eventPostNotInst.getEvent_Id(), null,null,null,null,null,null,null,null,null,null,null,null, null, null),null, null),
+                                           new EventJSON(eventPostNotInst.getEvent_Id(), null,null,null,null,null,null,null,null,null,null,null,null, null, null, 0),null, null, null),
                                              LocalDateTime.ofInstant(eventPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),    
-                                    new UserJSON(eventPostNotInst.getUserId(), null), eventPostNotInst.getSeen());
+                                    new UserJSON(eventPostNotInst.getUserId(), null, null, 0, false,
+                                             null, null, null, null, null, null),
+                                         eventPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else if (eventPostNotification.getPost() != null && eventPostNotification.getUser() != null && eventPostNotification.getEventPost().getEvent() == null){
@@ -602,10 +740,11 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return query.map(eventPostNontInst ->{
-                        return new EventPostNotificationJSON(0, 
-                            new EventPostJSON(eventPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null,null), 
+                        return new EventPostNotificationJSON(null, 
+                            new EventPostJSON(eventPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null,null, null), 
                              LocalDateTime.ofInstant(eventPostNontInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                new UserJSON(eventPostNontInst.getUserId(), null), eventPostNontInst.getSeen());
+                                new UserJSON(eventPostNontInst.getUserId(), null, null, 0, false, null, null, null, null, null, null),
+                                 eventPostNontInst.getSeen());
                 }).collect(Collectors.toSet());
         }
           else if (eventPostNotification.getPost() != null  && eventPostNotification.getUser() == null && eventPostNotification.getEventPost().getEvent() != null){
@@ -616,10 +755,12 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return query.map(eventPostNontInst ->{
-                        return new EventPostNotificationJSON(0, 
-                            new EventPostJSON(eventPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null), 
+                        return new EventPostNotificationJSON(null, 
+                            new EventPostJSON(eventPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null, null), 
                              LocalDateTime.ofInstant(eventPostNontInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                new UserJSON(eventPostNontInst.getUserId(), null), eventPostNontInst.getSeen());
+                                new UserJSON(eventPostNontInst.getUserId(), null, null, 0, false, 
+                                    null, null, null, null, null, null),
+                                 eventPostNontInst.getSeen());
                 }).collect(Collectors.toSet());
         }
         else if (eventPostNotification.getPost() == null  && eventPostNotification.getUser() != null && eventPostNotification.getEventPost().getEvent() != null){
@@ -630,18 +771,21 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return query.map(eventPostNontInst ->{
-                        return new EventPostNotificationJSON(0, 
-                            new EventPostJSON(eventPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null), 
+                        return new EventPostNotificationJSON(null, 
+                            new EventPostJSON(eventPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null, null), 
                              LocalDateTime.ofInstant(eventPostNontInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                new UserJSON(eventPostNontInst.getUserId(), null), eventPostNontInst.getSeen());
+                                new UserJSON(eventPostNontInst.getUserId(), null, null, 0, false,
+                                         null, null, null, null, null, null),
+                                 eventPostNontInst.getSeen());
                 }).collect(Collectors.toSet());
         }
         else{
             EventPostNotification eventPostNot = getEventPostNotificationEntity(eventPostNotification);
-                return Collections.singleton(new EventPostNotificationJSON(0, 
-                    new EventPostJSON(eventPostNot.getPost_Id(), null, null, 0, 0,  null, null, null, null),
+                return Collections.singleton(new EventPostNotificationJSON(null, 
+                    new EventPostJSON(eventPostNot.getPost_Id(), null, null, 0, 0,  null, null, null, null, null),
                          LocalDateTime.ofInstant(eventPostNot.getCreated().toInstant(), ZoneId.systemDefault()),
-                        new UserJSON(eventPostNot.getUserId(), null), eventPostNot.getSeen()));
+                        new UserJSON(eventPostNot.getUserId(), null, null, 0, false, null, null, null, null, null, null)
+                        , eventPostNot.getSeen()));
         }
         
     }
@@ -655,10 +799,13 @@ public class NotificationService implements NotificationOperations{
                                         .getResultStream();
                 
                 return  query.map(topicPostNotInst ->{
-                                return new TopicPostNotificationJSON(0,  
-                                                                new TopicPostJSON(topicPostNotInst.getPost_Id(), null,null, 0, 0, null, null, null,null),
+                                return new TopicPostNotificationJSON(null,  
+                                                                new TopicPostJSON(topicPostNotInst.getPost_Id(), null,null, 0, 0, null, null, null,null, null),
                                                                  LocalDateTime.ofInstant(topicPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),
-                                                                new UserJSON(topicPostNotInst.getUserId(), null), topicPostNotInst.getSeen());
+                                                                new UserJSON(topicPostNotInst.getUserId(), null, null,
+                                                                     0, false, null, null, null, null, null
+                                                                     , null),
+                                                                 topicPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else if(topicPostNotification.getUser() != null && topicPostNotification.getTopicPost().getTopic() == null && topicPostNotification.getPost() == null){
@@ -668,10 +815,13 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return  query.map(topicPostNotInst ->{
-                                return new TopicPostNotificationJSON(0,  
-                                    new TopicPostJSON(topicPostNotInst.getPost_Id(), null,null, 0, 0, null, null, null, null),
+                                return new TopicPostNotificationJSON(null,  
+                                    new TopicPostJSON(topicPostNotInst.getPost_Id(), null,null, 0, 0, null, null, null, null, null),
                                     LocalDateTime.ofInstant(topicPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),    
-                                    new UserJSON(topicPostNotInst.getUserId(), null), topicPostNotInst.getSeen());
+                                    new UserJSON(topicPostNotInst.getUserId(), null, null,
+                                         0, false, null, null, null, 
+                                         null, null, null),
+                                     topicPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         
@@ -682,10 +832,12 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return  query.map(topicPostNotInst ->{
-                                return new TopicPostNotificationJSON(0,  
-                                    new TopicPostJSON(topicPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null, null),
+                                return new TopicPostNotificationJSON(null,  
+                                    new TopicPostJSON(topicPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null, null, null),
                                     LocalDateTime.ofInstant(topicPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),    
-                                    new UserJSON(topicPostNotInst.getUserId(), null), topicPostNotInst.getSeen());
+                                    new UserJSON(topicPostNotInst.getUserId(), null, null, 0, 
+                                        false, null, null, null, null, null, null),
+                                     topicPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else if (topicPostNotification.getPost() == null && topicPostNotification.getUser() != null && topicPostNotification.getTopicPost().getTopic() != null){
@@ -695,10 +847,12 @@ public class NotificationService implements NotificationOperations{
                 .setParameter("seen", topicPostNotification.getSeen())
                 .getResultStream();
                 return query.map(topicPostNontInst ->{
-                        return new TopicPostNotificationJSON(0, 
-                            new TopicPostJSON(topicPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null), 
+                        return new TopicPostNotificationJSON(null, 
+                            new TopicPostJSON(topicPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null, null), 
                             LocalDateTime.ofInstant(topicPostNontInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                new UserJSON(topicPostNontInst.getUserId(), null), topicPostNotification.getSeen());
+                                new UserJSON(topicPostNontInst.getUserId(), null, null, 0, false,
+                                 null, null, null, null, null, null),
+                                 topicPostNotification.getSeen());
                 }).collect(Collectors.toSet());
         }else if (topicPostNotification.getPost() == null && topicPostNotification.getUser() != null && topicPostNotification.getTopicPost().getTopic() != null){
             Stream<EventPostNotification> query =entityManager.createNamedQuery("TopicPostNotification.getTopicPostNotificationByUserId&TopicId", EventPostNotification.class)
@@ -707,10 +861,12 @@ public class NotificationService implements NotificationOperations{
                 .setParameter("topicId", topicPostNotification.getTopicPost().getTopic().getTopicId())
                 .getResultStream();
                 return query.map(topicPostNontInst ->{
-                        return new TopicPostNotificationJSON(0, 
-                            new TopicPostJSON(topicPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null), 
+                        return new TopicPostNotificationJSON(null, 
+                            new TopicPostJSON(topicPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null, null), 
                             LocalDateTime.ofInstant(topicPostNontInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                new UserJSON(topicPostNontInst.getUserId(), null), topicPostNontInst.getSeen());
+                                new UserJSON(topicPostNontInst.getUserId(), null, null, 0, false,
+                                 null, null, null, null, null, null),
+                                 topicPostNontInst.getSeen());
                 }).collect(Collectors.toSet());
         }else if (topicPostNotification.getPost() != null && topicPostNotification.getUser() == null && topicPostNotification.getTopicPost().getTopic() != null){
             Stream<EventPostNotification> query =entityManager.createNamedQuery("TopicPostNotification.getTopicPostNotificationByTopicId&PostId", EventPostNotification.class)
@@ -719,19 +875,24 @@ public class NotificationService implements NotificationOperations{
                 .setParameter("seen", topicPostNotification.getSeen())
                 .getResultStream();
                 return query.map(topicPostNontInst ->{
-                        return new TopicPostNotificationJSON(0, 
-                            new TopicPostJSON(topicPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null), 
+                        return new TopicPostNotificationJSON(null, 
+                            new TopicPostJSON(topicPostNontInst.getPost_Id(), null, null, 0, 0, null, null, null, null, null), 
                              LocalDateTime.ofInstant(topicPostNontInst.getCreated().toInstant(), ZoneId.systemDefault()), 
-                                new UserJSON(topicPostNontInst.getUserId(), null), topicPostNontInst.getSeen());
+                                new UserJSON(topicPostNontInst.getUserId(), null, null, 0,
+                                 false, null, null, null, null,
+                                  null, null),
+                                 topicPostNontInst.getSeen());
                 }).collect(Collectors.toSet());
         }
 
         else{
             TopicPostNotification topicPostNot = getTopicPostNotificationEntity(topicPostNotification);
-                return Collections.singleton(new TopicPostNotificationJSON(0, 
-                    new TopicPostJSON(topicPostNot.getPost_Id(), null, null, 0, 0,  null, null, null, null),
+                return Collections.singleton(new TopicPostNotificationJSON(null, 
+                    new TopicPostJSON(topicPostNot.getPost_Id(), null, null, 0, 0,  null, null, null, null, null),
                          LocalDateTime.ofInstant(topicPostNot.getCreated().toInstant(), ZoneId.systemDefault()),
-                        new UserJSON(topicPostNot.getUserId(), null), topicPostNot.getSeen()));
+                        new UserJSON(topicPostNot.getUserId(), null, null, 0,
+                         false, null, null, null, null, null, null),
+                         topicPostNot.getSeen()));
         }
     }
 
@@ -744,10 +905,12 @@ public class NotificationService implements NotificationOperations{
                                         .getResultStream();
                 
                 return  query.map(topicPostNotInst ->{
-                                return new PostNotificationJSON(0,  
-                                new PostJSON(topicPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null),
+                                return new PostNotificationJSON(null,  
+                                new PostJSON(topicPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null, null),
                                                                  LocalDateTime.ofInstant(topicPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),
-                                                                new UserJSON(topicPostNotInst.getUserId(), null), topicPostNotInst.getSeen());
+                                    new UserJSON(topicPostNotInst.getUserId(), null, null,
+                                     0, false, null, null, null, null, null, null),
+                                     topicPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else if(postNotification.getPost() != null && postNotification.getUser() == null){
@@ -757,18 +920,22 @@ public class NotificationService implements NotificationOperations{
                 .getResultStream();
 
                 return  query.map(topicPostNotInst ->{
-                                return new PostNotificationJSON(0,  
-                                    new PostJSON(topicPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null),
+                                return new PostNotificationJSON(null,  
+                                    new PostJSON(topicPostNotInst.getPost_Id(), null, null, 0, 0, null, null, null, null),
                                      LocalDateTime.ofInstant(topicPostNotInst.getCreated().toInstant(), ZoneId.systemDefault()),    
-                                    new UserJSON(topicPostNotInst.getUserId(), null), topicPostNotInst.getSeen());
+                                    new UserJSON(topicPostNotInst.getUserId(), null, null,
+                                     0, false, null, null, null, null, null, null),
+                                     topicPostNotInst.getSeen());
                             }).collect(Collectors.toSet());
         }
         else{
             PostNotification topicPostNot = getPostNotificationEntity(postNotification);
-                return Collections.singleton(new PostNotificationJSON(0, 
-                    new PostJSON(topicPostNot.getPost_Id(), null, null, 0, 0, null, null, null),
+                return Collections.singleton(new PostNotificationJSON(null, 
+                    new PostJSON(topicPostNot.getPost_Id(), null, null, 0, 0, null, null, null, null),
                          LocalDateTime.ofInstant(topicPostNot.getCreated().toInstant(), ZoneId.systemDefault()),
-                        new UserJSON(topicPostNot.getUserId(), null), topicPostNot.getSeen()));
+                        new UserJSON(topicPostNot.getUserId(), null, null, 0, false,
+                             null, null,null, null, null, null),
+                         topicPostNot.getSeen()));
             }
     }
 }

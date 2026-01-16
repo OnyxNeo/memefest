@@ -1,7 +1,6 @@
 package com.memefest.DataAccess;
 
 import java.sql.Date;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -52,19 +51,19 @@ public class EventNotification {
         return this.event;
     }
 
-    public void setEvent_Id(int eventId){
+    public void setEvent_Id(Long eventId){
         this.id.setEvent_Id(eventId);
     }
 
-    public void setUserId(int userId){
+    public void setUserId(Long userId){
         this.id.setUserId(userId);
     }
 
-    public int getEvent_Id(){
+    public Long getEvent_Id(){
         return this.id.getEvent_Id();
     }
 
-    public int getUserId(){
+    public Long getUserId(){
         return this.id.getUserId();
     }
 

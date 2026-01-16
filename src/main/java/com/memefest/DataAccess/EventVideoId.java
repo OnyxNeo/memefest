@@ -7,24 +7,24 @@ import jakarta.persistence.Embeddable;
 public class EventVideoId {
     
     @Column(name = "Vid_Id", nullable = false, updatable = false, insertable = false)
-    private int vidId;
+    private Long vidId;
     
     @Column(name = "Event_Id", nullable = false, updatable = false, insertable = false)
-    private int eventId;
+    private Long eventId;
     
-    public int getEvent_Id() {
+    public Long getEvent_Id() {
         return this.eventId;
     }
     
-    public void setVid_Id(int vidId) {
+    public void setVid_Id(Long vidId) {
         this.vidId = vidId;
     }
     
-    public int getVid_Id() {
+    public Long getVid_Id() {
         return this.vidId;
     }
     
-    public void setEvent_Id(int eventId) {
+    public void setEvent_Id(Long eventId) {
         this.eventId = eventId;
     }    
 }

@@ -16,7 +16,7 @@ public class InteractNotificationJSON extends NotificationJSON{
     private PostJSON post;
 
     @JsonCreator
-    public InteractNotificationJSON(@JsonProperty("NotificationID") int notId,
+    public InteractNotificationJSON(@JsonProperty("NotificationID") Long notId,
                                         @JsonProperty("Post") PostJSON postJSON, 
                                             @JsonProperty("TimeStamp") LocalDateTime time, 
                                                 @JsonProperty("InteractionType") InteractionType interactionType,

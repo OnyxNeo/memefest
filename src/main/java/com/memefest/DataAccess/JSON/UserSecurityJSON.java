@@ -8,99 +8,97 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 @JsonRootName("UserSecurity")
 public class UserSecurityJSON {
   @JsonBackReference("userSecurity")
-  @JsonProperty("User")
+  @JsonProperty("user")
   private UserJSON user;
   
-  @JsonProperty("AccessToken")
+  @JsonProperty("accessTkn")
   private String accessTkn;
   
-  @JsonProperty("Password")
+  @JsonProperty("password")
   private String password;
   
-  @JsonProperty("RefreshToken")
+  @JsonProperty("refreshTkn")
   private String refreshTkn;
   
-  @JsonProperty("Cancel")
+  @JsonProperty("oldPassword")
+  private String oldPassword;
+
+  @JsonProperty("cancel")
   private boolean canceled;
   
   public UserSecurityJSON() {}
   
-  public UserSecurityJSON(@JsonProperty("AccessToken") String accessToken, @JsonProperty("Password") String password, @JsonProperty("RefreshToken") String refreshToken) {
-    this.accessTkn = accessToken;
-    this.password = password;
-    this.refreshTkn = refreshToken;
-    this.user = null;
-    this.canceled = false;
-  }
-  
-  public UserSecurityJSON(@JsonProperty("Password") String password, @JsonProperty("UserId") int userId, @JsonProperty("Username") String username) {
-    this.password = password;
-    this.user = new UserJSON(userId, username);
-    this.refreshTkn = null;
-    this.accessTkn = null;
-    this.canceled = false;
-  }
-  
   @JsonCreator
-  public UserSecurityJSON(@JsonProperty("AccessToken") String accessTkn, @JsonProperty("Password") String password, @JsonProperty("RefreshToken") String refreshToken, @JsonProperty("UserId") int userId, @JsonProperty("Username") String username) {
-    this(accessTkn, password, refreshToken, new UserJSON(userId, username));
-  }
-  
-  public UserSecurityJSON(@JsonProperty("AccessToken") String accessTkn, @JsonProperty("Password") String password, @JsonProperty("RefreshToken") String refreshTkn, UserJSON user) {
+  public UserSecurityJSON(@JsonProperty("accessTkn") String accessTkn,
+                            @JsonProperty("password") String password, 
+                              @JsonProperty("refreshTkn") String refreshToken,
+                                @JsonProperty("userId") Long userId,
+                                  @JsonProperty("userName") String username) {
     this.accessTkn = accessTkn;
     this.password = password;
-    this.refreshTkn = refreshTkn;
-    this.user = new UserJSON(user.getUserId(), user.getUsername());
-    this.canceled = false;
+    this.refreshTkn = refreshToken;
+    this.user = new UserJSON(userId, null, username, 0, false,
+                              null, null, null, null,
+                               null, null);
   }
   
-  @JsonProperty("User")
+  @JsonProperty("user")
   public UserJSON getUser() {
     return this.user;
   }
   
-  @JsonProperty("User")
+  @JsonProperty("user")
   public void setUser(UserJSON user) {
     this.user = user;
   }
   
-  @JsonProperty("AccessToken")
+  @JsonProperty("accessTkn")
   public String getAccessTkn() {
     return this.accessTkn;
   }
   
-  @JsonProperty("AccessToken")
+  @JsonProperty("accessTkn")
   public void setAccessTkn(String accessTkn) {
     this.accessTkn = accessTkn;
   }
   
-  @JsonProperty("Cancel")
+  @JsonProperty("cancel")
   public boolean isCancelled() {
     return this.canceled;
   }
   
-  @JsonProperty("Cancel")
+  @JsonProperty("cancel")
   public void setCanceled(boolean canceled) {
     this.canceled = canceled;
   }
   
-  @JsonProperty("Password")
+  @JsonProperty("password")
   public String getPassword() {
     return this.password;
   }
   
-  @JsonProperty("Password")
+  @JsonProperty("password")
   public void setPassword(String password) {
     this.password = password;
   }
   
-  @JsonProperty("RefreshToken")
+  @JsonProperty("refreshTkn")
   public String getRefreshTkn() {
     return this.refreshTkn;
   }
   
-  @JsonProperty("RefreshToken")
+  @JsonProperty("refreshTkn")
   public void setRefreshTkn(String refreshTkn) {
     this.refreshTkn = refreshTkn;
+  }
+
+  @JsonProperty("oldPassword")
+  public String getOldPassword(){
+    return this.oldPassword;
+  }
+
+  @JsonProperty("oldPassword")
+  public void setOldPassword(String oldPassword){
+    this.oldPassword = oldPassword;
   }
 }

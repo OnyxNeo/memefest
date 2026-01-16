@@ -1,34 +1,26 @@
 package com.memefest.DataAccess;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityResult;
-import jakarta.persistence.FieldResult;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedNativeQueries;
-import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToOne;
-import jakarta.persistence.SqlResultSetMapping;
-import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
    
 @NamedQueries({@NamedQuery(name = "PostReplyEntity.getRepliesOfPostId", 
-  query = "SELECT pr FROM PostReplyEntity pr WHERE pr.postReplyId.parentId = :postId")})
+  query = "SELECT pr FROM PostReplyEntity pr WHERE pr.postReplyId.parentId = :postId"),
+@NamedQuery(name =  "PostReplyEntity.getRepliesByUserId",
+  query = "SELECT pr FROM PostReplyEntity pr WHERE pr.post.userId = :userId")
+})
 @Entity(name = "PostReplyEntity")
 @Table(name = "REPLY")
 public class PostReply{
 
   @EmbeddedId
   private PostReplyId postReplyId = new PostReplyId();
-
-  @Column(name = "Post_Info", updatable = false, nullable = false, insertable = false)
-  private int parentPostId;
   
   @OneToOne(cascade = {CascadeType.MERGE})
   @JoinColumn(name = "Post_Id", referencedColumnName = "Post_Id")
@@ -44,7 +36,7 @@ public class PostReply{
   }
 
   public void setParent(Post parent){
-    this.postReplyId.setPost_Info(parentPostId);
+    this.postReplyId.setPost_Info(parent.getPost_Id());
     this.parent = parent;
   }
 
@@ -56,20 +48,16 @@ public class PostReply{
     this.postReplyId.setPost_Id(post.getPost_Id());
     this.post = post;
   }
-  
-  public int getPost_Info() {
-    return this.parentPostId;
-  }
-  
-  public void setPost_Info(int parentPostId) {
-    this.postReplyId.setPost_Info(parentPostId);
-  }
 
-  public int getPost_Id(){
+  public Long getPost_Id(){
     return this.postReplyId.getPost_Id();
   }
 
-  public void setPost_Id(int postId){
-    this.postReplyId.setPost_Id(postId);
+  public Long getPost_Info() {
+    return this.postReplyId.getPost_Info();
+  }
+  
+  public void setPost_Info(Long parentId) {
+    this.postReplyId.setPost_Info(parentId);
   }
 }

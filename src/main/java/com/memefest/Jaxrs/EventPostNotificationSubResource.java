@@ -43,7 +43,7 @@ public class EventPostNotificationSubResource extends Resource{
                                                         @MatrixParam("EventTitle") String topicTitle,
                                                             @MatrixParam("Comment") String comment,
                                                                 @MatrixParam("Username") String username){
-        EventPostNotificationJSON eventPostNot = new EventPostNotificationJSON(0, null, null,
+        EventPostNotificationJSON eventPostNot = new EventPostNotificationJSON(null, null, null,
                                     new UserJSON(context.getUserPrincipal().getName()), seen);
         eventPostNot.setUser(new UserJSON(context.getUserPrincipal().getName()));
         Set<EventPostNotificationJSON> results = notOps.getEventPostNotificationInfo(eventPostNot);

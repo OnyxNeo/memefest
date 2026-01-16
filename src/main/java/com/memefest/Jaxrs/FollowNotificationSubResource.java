@@ -44,7 +44,7 @@ public class FollowNotificationSubResource extends Resource{
                                                 @MatrixParam("Seen") boolean seen,
                                                     @MatrixParam("username") String username){
         UserJSON user = new UserJSON(username);
-        UserFollowNotificationJSON  followNot = new UserFollowNotificationJSON(0, 
+        UserFollowNotificationJSON  followNot = new UserFollowNotificationJSON(null, 
                                                 new UserJSON(context.getUserPrincipal().getName()),
                                                  null, user, seen); 
         followNot.setUser(new UserJSON(context.getUserPrincipal().getName()));

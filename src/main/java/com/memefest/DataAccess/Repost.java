@@ -1,11 +1,15 @@
 package com.memefest.DataAccess;
 
+
+import java.util.Set;
+
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity(name = "RepostEntity")
@@ -14,11 +18,9 @@ import jakarta.persistence.Table;
         name = "Repost.findByPostId",
         query = "SELECT p FROM RepostEntity p WHERE p.repostId.postId = :postId"),
     @NamedQuery(
-        name = "PostCategory.findByUserId", 
+        name = "Repost.findByUserId", 
         query = "SELECT p FROM RepostEntity p WHERE p.repostId.userId = :userId")
 })
-
-
 @Table(name = "REPOST")
 public class Repost {
     
@@ -28,33 +30,46 @@ public class Repost {
     @ManyToOne
     //@JoinColumn(referencedColumnName ="UserId", name = "UserId")
     //@MapsId("userId")
-    @JoinColumn(name= "UserId", nullable = false, insertable = false, updatable = false)
+    @JoinColumn(name= "UserId")
     private User user;
 
     @ManyToOne
     //@MapsId("postId")
-    @JoinColumn(name ="Post_Id", nullable =  false, insertable = false, updatable = false)
+    @JoinColumn(name ="Post_Id")
     //@JoinColumn(referencedColumnName = "Post_Id", name ="Post_Id")
     private Post post;
+    
+    @OneToMany(mappedBy = "post")
+    @JoinColumn(name="Post_Id", referencedColumnName  = "Post_Id")
+    private Set<RepostTaggedUser> taggedUsers;
+
+
+    public void setTaggedUsers(Set<RepostTaggedUser> taggedUsers){
+        this.taggedUsers = taggedUsers;
+    }
+
+    public Set<RepostTaggedUser> getTaggedUsers(){
+        return taggedUsers;
+    }
 
     public void setUser(User user) {
         this.setUserId(user.getUserId());
         this.user = user;
     }
 
-    public void setPost_Id(int postId) {
+    public void setPost_Id(Long postId) {
         this.repostId.setPost_Id(postId);
     }
 
-    public int getPost_Id(){
+    public Long getPost_Id(){
         return this.repostId.getPost_Id();
     }
 
-    public int getUserId() {
+    public Long getUserId() {
         return this.repostId.getUserId();
     }
 
-    public void setUserId(int userId){
+    public void setUserId(Long userId){
         this.repostId.setUserId(userId);
     }
 

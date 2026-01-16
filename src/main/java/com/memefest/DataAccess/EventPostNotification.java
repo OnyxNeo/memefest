@@ -1,7 +1,6 @@
 package com.memefest.DataAccess;
 
 import java.sql.Date;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -14,21 +13,17 @@ import jakarta.persistence.Table;
 
 @NamedQueries({
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByEventId", 
-        query = "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND ePN.seen = :seen"),
+        query = "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND (ePN.seen = :seen)"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByPostId",
-        query = "SELECT epN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.postId = :postId AND ePN.seen = :seen"),
+        query = "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.postId = :postId AND (ePN.seen = :seen)"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByUserId",
-        query = "SELECT epN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId "
-                    + "AND epN.seen = :seen"),
+        query = "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId AND (ePN.seen = :seen)"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByPostId&UserId",
-        query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId AND"
-                    + " ePN.eventPostNot.postId = :postId AND epN.seen = :seen"),
+        query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.recipientId = :userId AND (ePN.eventPostNot.postId = :postId AND (ePN.seen = :seen))"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByPostId&EventId",
-        query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND"
-                    + " ePN.eventPostNot.postId = :postId AND ePN.seen = :seen"),
+        query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND (ePN.eventPostNot.postId = :postId AND ePN.seen = :seen)"),
     @NamedQuery(name = "EventPostNotification.getEventPostNotificationByUserId&EventId",
-        query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND"
-                    + " ePN.eventPostNot.recipientId = :userId AND ePN.seen = :seen")
+        query =  "SELECT ePN FROM EventPostNotificationEntity ePN WHERE ePN.eventPostNot.eventId = :eventId AND (ePN.eventPostNot.recipientId = :userId AND ePN.seen = :seen)")
 })
 @Entity(name = "EventPostNotificationEntity")
 @Table(name = "EVENT_POST_NOTIFICATION")
@@ -43,7 +38,7 @@ public class EventPostNotification{
     @Column(name = "Seen")
     private boolean seen;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST})
+    @ManyToOne( )
     @JoinColumn(name = "Event_Id", referencedColumnName = "Event_Id")
     private Event event;
 
@@ -65,11 +60,11 @@ public class EventPostNotification{
         this.eventPostNot.setPost_Id(event.getEvent_Id());
     }
 
-    public void setEvent_Id(int eventId){
+    public void setEvent_Id(Long eventId){
         this.eventPostNot.setEvent_Id(eventId);
     }
 
-    public int getEvent_Id(){
+    public Long getEvent_Id(){
         return this.eventPostNot.getEvent_Id();
     }
 
@@ -82,11 +77,11 @@ public class EventPostNotification{
         this.eventPostNot.setUserId(user.getUserId());
     }
 
-    public int getUserId(){
+    public Long getUserId(){
         return this.eventPostNot.getUserId();
     }
 
-    public void setUserId(int userId){
+    public void setUserId(Long userId){
         this.eventPostNot.setUserId(userId);
     }
 
@@ -99,11 +94,11 @@ public class EventPostNotification{
         this.eventPostNot.setPost_Id(post.getPost_Id());
     }
 
-    public int getPost_Id(){
+    public Long getPost_Id(){
         return this.eventPostNot.getPost_Id();
     }
 
-    public void setPost_Id(int postId){
+    public void setPost_Id(Long postId){
         this.eventPostNot.setPost_Id(postId);
     }
 

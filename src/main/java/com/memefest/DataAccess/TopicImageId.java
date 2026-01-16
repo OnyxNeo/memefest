@@ -6,25 +6,25 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class TopicImageId {
 
-  @Column(name = "Img_Id", nullable = false, updatable = false, insertable = true)
-  private int imgId;
+  @Column(name = "Poster_Id", nullable = false, updatable = false, insertable = false)
+  private Long imgId;
   
   @Column(name = "Topic_Id", nullable = false, updatable = false, insertable = false)
-  private int topicId;
+  private Long topicId;
   
-  public int getPoster_Id() {
+  public Long getPoster_Id() {
     return this.imgId;
   }
   
-  public void setPoster_Id(int imgId) {
+  public void setPoster_Id(Long imgId) {
     this.imgId = imgId;
   }
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.topicId;
   }
   
-  public void setTopic_Id(int topicId) {
+  public void setTopic_Id(Long topicId) {
     this.topicId = topicId;
   }
 }

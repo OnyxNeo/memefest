@@ -6,24 +6,24 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class UserFollowerId {
   @Column(name = "UserId", nullable = false, updatable = false, insertable = false)
-  private int userId;
+  private Long userId;
   
   @Column(name = "Follower_Id", nullable = false, updatable = false, insertable = false)
-  private int followerId;
+  private Long followerId;
   
-  public int getUserId() {
+  public Long getUserId() {
     return this.userId;
   }
   
-  public void setUserId(int userId) {
+  public void setUserId(Long userId) {
     this.userId = userId;
   }
   
-  public int getFollowerId() {
+  public Long getFollowerId() {
     return this.followerId;
   }
   
-  public void setFollowerId(int followerId) {
+  public void setFollowerId(Long followerId) {
     this.followerId = followerId;
   }
 }

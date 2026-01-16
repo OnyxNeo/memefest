@@ -1,12 +1,10 @@
 package com.memefest.Jaxrs;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
-import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
+import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.memefest.CacheHelper.CacheHelper;
 import com.memefest.DataAccess.JSON.UserJSON;
+import com.memefest.DataAccess.JSON.UserLoginJSON;
 import com.memefest.DataAccess.JSON.UserSecurityJSON;
 import com.memefest.Email.EmailSender;
 import com.memefest.Security.JwtAuthIdentityStore;
@@ -25,13 +23,15 @@ import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
+
 import org.ehcache.Cache;
 import org.ehcache.CacheManager;
 
 @PermitAll
 @RequestScoped
 @Path("SignIn")
-public class UserLoginResource{
+public class UserLoginResource extends Resource{
+  
   @Inject
   private UserSecurityService userService;
   
@@ -41,24 +41,14 @@ public class UserLoginResource{
   @Context
   private jakarta.ws.rs.core.SecurityContext securityContext;
 
-  private ObjectMapper mapper;
-
-  protected UserLoginResource(){
-    this.mapper = new ObjectMapper();
-    SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAll();
-    SimpleFilterProvider provider = new SimpleFilterProvider();
-    provider.addFilter("UserPublicView", filter);
-    this.mapper.setFilterProvider(provider);
-    this.mapper.setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
-  }
-
 
   @PermitAll
   @PUT
   @Path("Verify-email")
   @Consumes({"application/x-www-form-urlencoded"})
-  public Response verifyEmail(@BeanParam UserInput input) {
-    UserJSON user = this.userService.getUserDetails(new UserJSON(input.getEmail(), input.getUsername(), 0, false, input.getFirstname(), input.getLastname(), null));
+  public Response verifyEmail(@BeanParam UserInput input) throws JsonProcessingException{
+    UserJSON user = this.userService.getUserDetails(new UserJSON(null, input.getEmail(), input.getUsername(), 0, false, input.getFirstname(), input.getLastname(), 
+      null, null, null, null));
     if (user != null)
       return Response.status(403).entity("Username already exists, try a different username").build(); 
     if (this.userService.emailExists(new UserJSON(input.getUsername(), input.getEmail())))
@@ -66,6 +56,7 @@ public class UserLoginResource{
     UserJSON guestDetails = new UserJSON(input.getUsername(), input.getEmail(), input.getContacts(), input.getFirstname(), input.getLastname());
     UserSecurityJSON securityDetails = JwtAuthIdentityStore.createUserAccessToken(guestDetails);
     guestDetails.setUserSecurity(securityDetails);
+    userOwnersView();
     cacheGuestContent(guestDetails);
     StringBuilder sb = new StringBuilder();
     sb.append("<!DOCTYPE html>");
@@ -118,7 +109,8 @@ public class UserLoginResource{
     sb.append("</body>");
     sb.append("</html>");
     EmailSender.sendPlainTextEmail("hyperforbics@gmail.com", input.getEmail(), "Jinice Email verification", sb.toString(), false);
-    return Response.ok().build();
+    //return Response.ok(mapper.writeValueAsString(guestDetails)).build();
+    return Response.ok(mapper.writeValueAsString(sb.toString())).build();
   }
   
   @PermitAll
@@ -132,7 +124,8 @@ public class UserLoginResource{
   @PUT
   @Path("Sign-Up")
   @Consumes({"application/json"})
-  public Response signUp(UserSecurityJSON user) {
+  public Response signUp(String userSecurityJson) throws JsonProcessingException{
+    UserSecurityJSON user = mapper.readValue(userSecurityJson,UserSecurityJSON.class);
     if (user.getPassword() == null)
       return Response.status(204).entity("Null password").build(); 
     UserJSON userInClaims = null;
@@ -143,15 +136,15 @@ public class UserLoginResource{
     } 
     if (userInClaims != null) {
       userInClaims = getGuestContentFromCache(userInClaims.getUsername());
-      UserSecurityJSON userSecurity = new UserSecurityJSON(null, user.getPassword(), null, userInClaims);
+      UserSecurityJSON userSecurity = new UserSecurityJSON(null, user.getPassword(), null, userInClaims.getUserId(), userInClaims.getUsername());
       userSecurity.setAccessTkn(JwtAuthIdentityStore.createUserAccessToken(userInClaims).getAccessTkn());
       userSecurity.setRefreshTkn(JwtAuthIdentityStore.createUserRefreshTokens(userInClaims).getRefreshTkn());
       userInClaims.setUserSecurity(userSecurity);
       cacheNewUserContent(userInClaims);
       this.userService.createUser(userInClaims);
       userSecurity.setPassword(null);
-      return Response.ok().entity(userSecurity).build();
-    } 
+      return Response.ok().entity(mapper.writeValueAsString(userInClaims)).build();
+    }  
     return Response.status(401).entity("Bad token").build();
   }
   
@@ -166,7 +159,8 @@ public class UserLoginResource{
   @PUT
   @Path("Refresh")
   @Consumes({"application/json"})
-  public Response refreshToken(UserJSON user) {
+  public Response refreshToken(String userJson) throws JsonProcessingException{
+    UserJSON user = mapper.readValue(userJson, UserJSON.class);
     if (user.getUserSecurity() == null)
       return Response.status(204).build(); 
     String refreshToken = user.getUserSecurity().getRefreshTkn();
@@ -177,22 +171,46 @@ public class UserLoginResource{
     if (secDetails == null || secDetails.getRefreshTkn() != refreshToken)
       return Response.status(401).entity("Invalid refresh Tokens").build(); 
     if (refreshClaims != null && accessClaims != null) {
-      UserSecurityJSON securityDetails = user.getUserSecurity();
+      UserSecurityJSON securityDetails = new UserSecurityJSON();
       securityDetails = JwtAuthIdentityStore.createUserAccessToken(secDetails.getUser());
       accessClaims.setUserSecurity(securityDetails);
       securityDetails = JwtAuthIdentityStore.createUserRefreshTokens(secDetails.getUser());
       user.setUserSecurity(securityDetails);
-      return Response.ok(user).build();
+      return Response.ok(mapper.writeValueAsString(securityDetails)).build();
     } 
     return Response.status(401).entity("refresh or access tokens not recognised").build();
   }
+
+
+  @PermitAll
+  @OPTIONS
+  @Path("Logout")
+  public Response optionsLogout() {
+    return Response.ok().build();
+  }  
+
   
+  @GET
+  @Path("Logout")
+  public Response logout() throws JsonProcessingException{
+    UserJSON user = new UserJSON(this.securityContext.getUserPrincipal().getName());
+    UserSecurityJSON userSec = new UserSecurityJSON();
+    userSec.setUser(user);
+    userService.setSecurityDetails(userSec);
+    return Response.ok().build();
+  }
+
+
+
   @RolesAllowed({"User", "Admin"})
   @PUT
   @Path("User/ResetPassword")
   @Consumes({"application/json"})
-  public Response resetPassword(UserJSON user) {
-    UserSecurityJSON securityDetails = new UserSecurityJSON(null, user.getUserSecurity().getPassword(), null, new UserJSON(0, this.securityContext.getUserPrincipal().getName()));
+  public Response resetPassword(String userJSON) throws JsonProcessingException{
+    UserJSON user = mapper.readValue(userJSON, UserJSON.class);
+    new UserSecurityJSON(null, user.getUserSecurity().getPassword(), null, null, this.securityContext.getUserPrincipal().getName());
+    UserSecurityJSON securityDetails = new UserSecurityJSON(null, user.getUserSecurity().getPassword(),
+       null, null, this.securityContext.getUserPrincipal().getName());
     user.setUserSecurity(securityDetails);
     this.userService.setUserPassword(securityDetails);
     return Response.status(200).entity(user).build();
@@ -208,7 +226,8 @@ public class UserLoginResource{
   @PUT
   @Path("ResetPassword")
   @Consumes({"application/json"})
-  public Response resetPasswordWithEmail(UserJSON user) {
+  public Response resetPasswordWithEmail(String userJson) throws JsonProcessingException{
+    UserJSON user = mapper.readValue(userJson, UserJSON.class);
     user = this.userService.getUserDetails(user);
     if (user == null)
       return Response.status(403).entity("User not found").build(); 
@@ -235,17 +254,54 @@ public class UserLoginResource{
     return Response.ok().build();
   }
   
+  
+private UserSecurityJSON rotateAccesToken(UserJSON user){
+    UserSecurityJSON secDetails = userService.getSecurityDetails(user);
+    try{
+      UserJSON userInClaims = null;
+      if(secDetails.getRefreshTkn() != null){
+        userInClaims = JwtAuthIdentityStore.verifyToken(secDetails.getRefreshTkn());
+        if(userInClaims == null){  
+          String refreshTkn = secDetails.getRefreshTkn();
+          secDetails = JwtAuthIdentityStore.createUserAccessToken(user);
+          secDetails.setRefreshTkn(refreshTkn);
+        }
+        if(secDetails.getAccessTkn() != null){
+          userInClaims = JwtAuthIdentityStore.verifyToken(secDetails.getAccessTkn());  
+          if(userInClaims != null){
+            return secDetails;
+          }        
+        }
+        user.setUserSecurity(secDetails);
+        secDetails = JwtAuthIdentityStore.createUserAccessToken(user);
+        return secDetails;      
+      }
+      else
+        throw new JwtException("Expired Access Token for "+ user.getUsername());
+    }
+    catch(JwtException ex){
+      secDetails = JwtAuthIdentityStore.createUserRefreshTokens(user);
+      user.setUserSecurity(secDetails);
+      secDetails = JwtAuthIdentityStore.createUserAccessToken(user);
+      userService.setSecurityDetails(secDetails);
+      return secDetails;
+    }
+  }
+
   @RolesAllowed({"User", "Admin"})
   @Path("/login")
   @GET
-  public Response login() {
+  @PermitAll
+  public Response login() throws JsonProcessingException{
     try {
-      UserSecurityJSON uSecurityJSON = this.userService
-                                      .getSecurityDetails(
-                                        new UserJSON(this.securityContext.getUserPrincipal().getName()));
-      if (uSecurityJSON != null)
-        return Response.ok().entity(uSecurityJSON).build(); 
-      return Response.status(401).entity("User not signed In").build();
+      FilterProvider provider = Resource.setFilters(getPublicViewFilters());
+      //mapper.setSerializationInclusion(Include.NON_DEFAULT);
+      this.mapper.setFilterProvider(provider);
+      UserJSON user = userService.getUserDetails(new UserJSON(this.securityContext.getUserPrincipal().getName()));
+      UserSecurityJSON secDetails = rotateAccesToken(user);
+      user = JwtAuthIdentityStore.verifyToken(secDetails.getAccessTkn());
+      UserLoginJSON userDetails = new UserLoginJSON(user, secDetails.getAccessTkn(), secDetails.getRefreshTkn());
+      return Response.ok().entity(mapper.writeValueAsString(userDetails)).build();
     } catch (NoResultException ex) {
       return Response.status(401).entity("User not signed In").build();
     } 
@@ -254,9 +310,8 @@ public class UserLoginResource{
   private UserJSON getGuestContentFromCache(String username) {
     CacheManager cacheManager = this.cacheHelper.getCacheManager();
     Cache<String, String> userCache = cacheManager.getCache("guestCache", String.class, String.class);
-
     try {
-      return (UserJSON)this.mapper.readValue((String)userCache.get(username), UserJSON.class);
+      return (UserJSON)mapper.readValue((String)userCache.get(username), UserJSON.class);
     } catch (JsonProcessingException ex) {
       ex.printStackTrace();
       return null;
@@ -274,7 +329,7 @@ public class UserLoginResource{
     CacheManager cacheManager = this.cacheHelper.getCacheManager();
     Cache<String, String> userCache = cacheManager.getCache("guestCache", String.class, String.class);
     try {
-      String userDetails = this.mapper.writeValueAsString(user);
+      String userDetails = mapper.writeValueAsString(user);
       if (userDetails == null)
         throw new IllegalStateException("user is null"); 
       userCache.put(user.getUsername(), userDetails);

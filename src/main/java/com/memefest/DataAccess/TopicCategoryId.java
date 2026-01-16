@@ -7,24 +7,24 @@ import jakarta.persistence.Embeddable;
 public class TopicCategoryId {
     
   @Column(name = "Cat_Id", nullable = false, updatable = false, insertable = false)
-  private int catId;
+  private Long catId;
   
   @Column(name = "Topic_Id", nullable = false, updatable = false, insertable = false)
-  private int topicId;
+  private Long topicId;
   
-  public int getCat_Id() {
+  public Long getCat_Id() {
     return this.catId;
   }
   
-  public void setCat_Id(int catId) {
+  public void setCat_Id(Long catId) {
     this.catId = catId;
   }
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.topicId;
   }
   
-  public void setTopic_Id(int topicId) {
+  public void setTopic_Id(Long topicId) {
     this.topicId = topicId;
   }
 }

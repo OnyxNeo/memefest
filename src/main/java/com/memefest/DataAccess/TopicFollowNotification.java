@@ -1,7 +1,6 @@
 package com.memefest.DataAccess;
 
 import java.sql.Date;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
@@ -55,19 +54,19 @@ public class TopicFollowNotification {
     this.setUserId(user.getUserId());
   }
 
-  public void setTopic_Id(int followerId) {
+  public void setTopic_Id(Long followerId) {
     this.id.setTopic_Id(followerId);
   }
   
-  public void setUserId(int userId) {
+  public void setUserId(Long userId) {
     this.id.setUserId(userId);
   }
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.id.getTopic_Id();
   }
   
-  public int getUserId() {
+  public Long getUserId() {
     return this.id.getUserId();
   }
   

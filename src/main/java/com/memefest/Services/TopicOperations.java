@@ -5,9 +5,8 @@ import java.util.Set;
 import com.memefest.DataAccess.Topic;
 import com.memefest.DataAccess.JSON.TopicJSON;
 
-import jakarta.ejb.Local;
 
-@Local
+//@Local
 public interface TopicOperations {
 
     public void createTopic(TopicJSON topic);

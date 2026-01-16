@@ -8,24 +8,24 @@ public class TopicPostId {
 
 
   @Column(name = "Post_Id", nullable = false, updatable = false, insertable = false)
-  private int postId;
+  private Long postId;
   
   @Column(name = "Topic_Id", nullable = false, updatable = false, insertable = false)
-  private int topicId;
+  private Long topicId;
   
-  public int getPost_Id() {
+  public Long getPost_Id() {
     return this.postId;
   }
   
-  public void setPost_Id(int postId) {
+  public void setPost_Id(Long postId) {
     this.postId = postId;
   }
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.topicId;
   }
   
-  public void setTopic_Id(int topicId) {
+  public void setTopic_Id(Long topicId) {
     this.topicId = topicId;
   }
 }

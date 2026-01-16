@@ -8,8 +8,7 @@ import jakarta.persistence.FieldResult;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.NamedNativeQueries;
 import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.NamedQueries;
@@ -24,13 +23,13 @@ import java.util.Set;
 @NamedNativeQueries({
   @NamedNativeQuery(
     name = "Topic.getTopicByTitle",
-    query = "SELECT TOP(1) T.Topic_Id as topicId, T.Title as topicName, T.Created as created FROM TOPIC T" 
+    query = "SELECT TOP(1) T.Topic_Id as topicId, T.Title as topicName, T.Created as created, T.Likes as likes FROM TOPIC T" 
       + " WHERE T.Title LIKE CONCAT('%',CONCAT(?, '%'))",
     resultSetMapping = "TopicEntityMapping"),
     @NamedNativeQuery(
       name = "Topic.searchByTitle",
-      query = "SELECT T.Topic_Id as topicId, T.Title as topicName, T.Created as created FROM TOPIC T" 
-        + " WHERE T.title LIKE CONCAT('%', :title, '%')",
+      query = "SELECT T.Topic_Id as topicId, T.Title as topicName, T.Created as created, T.Likes as likes FROM TOPIC T" 
+        + " WHERE T.title LIKE CONCAT('%',CONCAT(?, '%'))",
       resultSetMapping = "TopicEntityMapping")
 })
 @SqlResultSetMappings({
@@ -41,7 +40,8 @@ import java.util.Set;
         entityClass = Topic.class, 
         fields = {
           @FieldResult(name = "topicId", column = "topicId"), 
-          @FieldResult(name = "topicName", column = "topicName"), 
+          @FieldResult(name = "topicName", column = "topicName"),
+          @FieldResult(name = "likes", column = "likes"), 
           @FieldResult(name = "created", column = "created")
         }
       )
@@ -60,27 +60,34 @@ import java.util.Set;
 @Entity(name = "TopicEntity")
 @Table(name = "TOPIC")
 public class Topic {
+  
   @Id
   @Column(name = "Topic_Id")
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private int topicId;
+  //@UuidGenerator
+  private Long topicId;
   
   @Column(name = "Title")
   private String topicName;
   
   @Column(name = "Created")
   private Date created;
+
+  @Column(name = "Likes")
+  private int likes;
   
-  @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "topic")
-  private Set<TopicPost> topicPosts;
+  @OneToMany(cascade = {CascadeType.ALL}, mappedBy = "topic")
+  private Set<TopicPost> topicPost;
   
   @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "topic")
   public Set<TopicFollower> followedBy;
 
   @OneToMany(cascade ={CascadeType.PERSIST}, mappedBy = "topic")
+  @JoinColumn(referencedColumnName = "Topic_Id")
   private Set<TopicPostNotification> notifications;
 
   @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "topic")
+  @JoinColumn(referencedColumnName = "Topic_Id")
   private Set<TopicImage> topicImages;
   
   @OneToMany(cascade = {CascadeType.PERSIST}, mappedBy = "topic")
@@ -104,11 +111,11 @@ public class Topic {
     this.followedBy = followedBy;
   }
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.topicId;
   }
   
-  public void setTopic_Id(int topicId) {
+  public void setTopic_Id(Long topicId) {
     this.topicId = topicId;
   }
   
@@ -120,12 +127,12 @@ public class Topic {
     this.created = created;
   }
   
-  public void setPosts(Set<TopicPost> posts) {
-    this.topicPosts = posts;
+  public void setTopicPosts(Set<TopicPost> post) {
+    this.topicPost = post;
   }
   
-  public Set<TopicPost> getPosts() {
-    return this.topicPosts;
+  public Set<TopicPost> getTopicPosts() {
+    return this.topicPost;
   }
   public String getTitle() {
     return this.topicName;
@@ -166,6 +173,18 @@ public class Topic {
   public void setCategories(Set<TopicCategory> categories){
     this.topicCategories = categories;
   }
+
+  public int getLikes(){
+    return this.likes;
+  }  
+
+  public void setLikes(int likes){
+    this.likes = likes;
+  }
+
+  public void addLikes(){
+        this.setLikes((getLikes() + 1));
+    }
 
 /* 
   public Set<SubCategory> getSubCategories(){

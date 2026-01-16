@@ -47,19 +47,19 @@ public class UserFollower {
     return this.follower;
   }
   
-  public void setFollower_Id(int followerId) {
+  public void setFollower_Id(Long followerId) {
     this.id.setFollowerId(followerId);
   }
   
-  public void setUserId(int userId) {
+  public void setUserId(Long userId) {
     this.id.setUserId(userId);
   }
   
-  public int getFollower_Id() {
+  public Long getFollower_Id() {
     return this.id.getFollowerId();
   }
   
-  public int getUserId() {
+  public Long getUserId() {
     return this.id.getUserId();
   }
 }

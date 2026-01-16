@@ -43,9 +43,9 @@ public class PostNotificationSubResource extends Resource{
                                                 @MatrixParam("Username") String username,
                                                     @DefaultValue("false") @MatrixParam("Seen") boolean seen){
         UserJSON user = new UserJSON(username);
-        PostJSON post = new PostJSON(0, comment, null,
-         0, 0, user, null, null);
-        PostNotificationJSON postNot = new PostNotificationJSON(0, post, null,
+        PostJSON post = new PostJSON(null, comment, null,
+         0, 0, user, null, null, null);
+        PostNotificationJSON postNot = new PostNotificationJSON(null, post, null,
                          new UserJSON(context.getUserPrincipal().getName()), seen);
         Set<PostNotificationJSON> results = notOps.getPostNotificationInfo(postNot);
         StringBuilder builder = new StringBuilder("[");

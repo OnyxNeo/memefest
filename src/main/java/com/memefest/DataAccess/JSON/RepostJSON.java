@@ -13,22 +13,23 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 @JsonIdentityInfo(generator = ObjectIdGenerators.None.class)
 public class RepostJSON extends PostJSON{
 
-    @JsonProperty("Owner")
+    @JsonProperty("owner")
     private UserJSON owner;
 
-    @JsonProperty("IsCanceled")
+    @JsonProperty("isCanceled")
     private boolean isCanceled;
 
     @JsonCreator
-    public RepostJSON(@JsonProperty("PostId") int postId, @JsonProperty("Comment") String comment, 
-                        @JsonProperty("Created") LocalDateTime created, 
-                            @JsonProperty("Upvotes") int upvotes,
-                                 @JsonProperty("Downvotes") int downvotes,
-                                    @JsonProperty("User") UserJSON user,
-                                        @JsonProperty("Owner") UserJSON owner, 
-                                        @JsonProperty("Categories") Set<CategoryJSON>  categories,
-                      @JsonProperty("CanceledCategories")Set<CategoryJSON> canceledCats) {
-        super(postId,comment,created,upvotes, downvotes,user, categories,canceledCats);
+    public RepostJSON(@JsonProperty("id") Long postId, @JsonProperty("body") String comment, 
+                        @JsonProperty("createdAt") LocalDateTime created, 
+                            @JsonProperty("upvotes") int upvotes,
+                                 @JsonProperty("downvotes") int downvotes,
+                                    @JsonProperty("user") UserJSON user,
+                                        @JsonProperty("owner") UserJSON owner, 
+                                        @JsonProperty("categories") Set<CategoryJSON>  categories,
+                      @JsonProperty("canceledCategories")Set<CategoryJSON> canceledCats,
+                      @JsonProperty("taggedUsers") Set<UserJSON> taggedUsers) {
+        super(postId,comment,created,upvotes, downvotes,user, categories,canceledCats, taggedUsers);
         this.owner = owner;
         this.isCanceled = false;
     }

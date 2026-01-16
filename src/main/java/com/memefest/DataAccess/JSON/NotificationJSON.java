@@ -25,7 +25,7 @@ public class NotificationJSON {
     private Notification notification;  
 
     @JsonProperty("NotificationID")
-    private int notId;
+    private Long notId;
 
     @JsonProperty("User")
     private UserJSON user;
@@ -38,7 +38,7 @@ public class NotificationJSON {
 
     
     @JsonCreator
-    public NotificationJSON(@JsonProperty("NotificationID") int notId, 
+    public NotificationJSON(@JsonProperty("NotificationID") Long notId, 
                                 @JsonProperty("Timestamp") LocalDateTime date,
                                     @JsonProperty("NotificationType") Notification notification, UserJSON user,
                                         @JsonProperty("Seen") boolean seen){
@@ -60,11 +60,11 @@ public class NotificationJSON {
         return notification;
     }
 
-    public void setNotificationId(int Id){
+    public void setNotificationId(Long Id){
         this.notId = Id;
     }
 
-    public int getNotificationId(){
+    public Long getNotificationId(){
         return notId;
     }
 

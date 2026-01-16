@@ -8,12 +8,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EntityResult;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.FieldResult;
-import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedNativeQueries;
@@ -21,21 +18,34 @@ import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
 
 @NamedNativeQueries({
     @NamedNativeQuery(name = "Post.getPostByComment",
-    query = "SELECT TOP(1) P.Post_Id as postId, P.Comment as comment, P.Created as created," 
-                   + "P.Upvotes as upvotes, P.downvotes as downvotes, P.UserId as userId FROM POST P "
-                + "WHERE P.Comment LIKE CONCAT(CONCAT( '%',?),'%')", resultSetMapping = "PostEntityMapping"
+        query = "SELECT TOP(1) P.Post_Id as postId, P.Comment as comment, P.Created as created," 
+                   + " P.UserId as userId FROM POST P "
+                + "WHERE P.Comment LIKE CONCAT(CONCAT( '%',?),'%')  AND P.Post_Id NOT IN(SELECT REPLY.Post_Id FROM REPLY) AND "
+                + "P.Post_Id NOT IN (SELECT EVENT_POST.Post_Id FROM EVENT_POST) AND P.Post_Id NOT IN "
+                + "(SELECT TOPIC_POST.Post_Id FROM TOPIC_POST) AND P.Post_Id NOT IN (SELECT JOKEOFDAY_POST.Post_Id FROM JOKEOFDAY_POST)"
+        , resultSetMapping = "PostEntityMapping"
     ),
     @NamedNativeQuery(name = "Post.searchByComment",
-    query = "SELECT P.Post_Id as postId, P.Comment as comment, P.Created as created," 
-                   + "P.Upvotes as upvotes, P.downvotes as downvotes, P.UserId as userId FROM POST P "
-                + "WHERE P.Comment LIKE CONCAT(CONCAT( '%',?),'%')", resultSetMapping = "PostEntityMapping"
+        query = "SELECT P.Post_Id as postId, P.Comment as comment, P.Created as created," 
+                   + " P.UserId as userId FROM POST P "
+                + "WHERE P.Comment LIKE CONCAT(CONCAT( '%',?),'%') AND P.Post_Id NOT IN(SELECT REPLY.Post_Id FROM REPLY) AND "
+                + "P.Post_Id NOT IN (SELECT EVENT_POST.Post_Id FROM EVENT_POST) AND P.Post_Id NOT IN "
+                + "(SELECT TOPIC_POST.Post_Id FROM TOPIC_POST) AND P.Post_Id NOT IN (SELECT JOKEOFDAY_POST.Post_Id FROM JOKEOFDAY_POST)"
+        , resultSetMapping = "PostEntityMapping"
+    ),
+    @NamedNativeQuery(name = "Post.getByUserId",
+        query = "SELECT P.Post_Id as postId, P.Comment as comment, P.Created as created, "
+                                   +"P.UserId as userId FROM POST P "
+                + "WHERE P.UserId = ? AND P.Post_Id NOT IN(SELECT REPLY.Post_Id FROM REPLY) AND "
+                + "P.Post_Id NOT IN (SELECT EVENT_POST.Post_Id FROM EVENT_POST) AND P.Post_Id NOT IN "  
+                + "(SELECT TOPIC_POST.Post_Id FROM TOPIC_POST) AND P.Post_Id NOT IN (SELECT JOKEOFDAY_POST.Post_Id FROM JOKEOFDAY_POST)",
+        resultSetMapping = "PostEntityMapping"
     )
 })
 @SqlResultSetMappings(
@@ -48,8 +58,6 @@ import jakarta.persistence.Table;
                     @FieldResult(name = "postId", column = "postId"),
                     @FieldResult(name = "comment", column = "comment"),
                     @FieldResult(name = "created", column = "created"),
-                    @FieldResult(name = "upvotes", column = "upvotes"),
-                    @FieldResult(name = "downvotes", column = "downvotes"),
                     @FieldResult(name = "userId", column = "userId"),
                 }
             )
@@ -58,39 +66,29 @@ import jakarta.persistence.Table;
 )
 @NamedQueries({
     @NamedQuery(
-        name = "Post.findByUserId",
-        query = "SELECT p FROM PostEntity p WHERE p.userId = :userId"
-    ),
-    @NamedQuery(
         name = "Post.getAll",
-        query = "SELECT p FROM PostEntity p"
+        query = "SELECT po FROM PostEntity po WHERE po.postId NOT IN (SELECT pr.post.postId FROM PostReplyEntity pr)"
     )
 })
 @Entity(name = "PostEntity")
 @Table(name = "POST")
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+//@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public class Post {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Post_Id")
-    private int postId;
+    //@UuidGenerator
+    private Long postId;
 
     @Column(name = "Comment")
     private String comment;
     
     @Column(name = "UserId", nullable = false, insertable =  false, updatable = false)
-    private int userId;
+    private Long userId;
 
     @Column(name = "Created")
     private Date created;
-
-    @Column(name = "Upvotes")
-    private int upvotes;
-
-    @Column(name = "Downvotes")
-    private int downvotes;
-
     
     /* 
     @Column(name = "Video_Id",nullable = true, insertable = true, updatable = true)
@@ -99,16 +97,13 @@ public class Post {
     @Column(name = "Img_Id", nullable = true, insertable = true, updatable = true)
     private int imageId;
     */
-
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "post", optional = true)
-    private PostReply parent;
-
-    @OneToOne(fetch = FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "post", optional = true)
-    private TopicPost topic;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "UserId")
     private User user;   
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
+    @JoinColumn(referencedColumnName =  "Post_Id")
+    private Set<PostTaggedUser> taggedUsers;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     private Set<PostVideo> videos;
@@ -116,6 +111,12 @@ public class Post {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     @JoinColumn(referencedColumnName = "Post_Id")
     private Set<EventPost> eventPosts;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
+    private Set<TopicPost> topicPosts;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
+    private Set<JokeOfDayPost> jokeOfDays;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     private Set<PostImage> images;
@@ -126,22 +127,39 @@ public class Post {
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     private Set<PostNotification> notifications;
 
-    @OneToMany(mappedBy = "post")
+    @OneToMany(fetch = FetchType.LAZY)
+    @JoinColumn(referencedColumnName = "Post_Id")
+    private Set<TopicPostNotification> topicPostNotifications;
+
+    @OneToMany(fetch =  FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     @JoinColumn(referencedColumnName = "Post_Id")    
     private Set<Repost> reposts;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     private Set<PostCategory> categories;
 
-    public int getPost_Id(){
+
+    @OneToMany(fetch =  FetchType.LAZY, cascade =  CascadeType.PERSIST, mappedBy = "post")
+    @JoinColumn(referencedColumnName = "Post_Id")
+    private Set<Interact> interactions;
+
+    public Long getPost_Id(){
         return postId;
+    }
+
+    public void setTaggedUsers(Set<PostTaggedUser> taggedUsers){
+        this.taggedUsers = taggedUsers;
+    }
+
+    public Set<PostTaggedUser> getTaggedUsers(){
+        return this.taggedUsers;
     }
 
     public Set<PostCategory> getCategories(){
         return this.categories; 
     }
 
-    public void setPost_Id(int postId){
+    public void setPost_Id(Long postId){
         this.postId = postId;
     }
     
@@ -153,11 +171,11 @@ public class Post {
         this.user = user;
     }    
     
-    public int getUserId(){
+    public Long getUserId(){
         return userId;
     }
 
-    public void setUserId(int userId){
+    public void setUserId(Long userId){
         this.userId = userId;
     }   
 
@@ -171,6 +189,10 @@ public class Post {
 
     public Set<PostNotification> getNotifications(){
         return this.notifications;
+    }
+
+    public Set<Interact> getInteractions(){
+        return this.interactions;
     }
 
     public void setNotifications(Set<PostNotification> notifications) {
@@ -191,22 +213,6 @@ public class Post {
 
     public void setCreated(Date created) {
         this.created = created;
-    }
-
-    public int getUpvotes() {
-        return upvotes;
-    }
-
-    public void setUpvotes(int upvotes) {
-        this.upvotes = upvotes;
-    }
-
-    public int getDownvotes() {
-        return downvotes;
-    }
-
-    public void setDownvotes(int downvotes) {
-        this.downvotes = downvotes;
     }
 
     public void addReply(PostReply postReply) {

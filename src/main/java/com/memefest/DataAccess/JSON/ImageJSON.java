@@ -6,37 +6,37 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
-@JsonRootName("Image")
+@JsonRootName("image")
 @JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "ImageId")
 public class ImageJSON {
     
-    @JsonProperty("ImageId")
-    private int imgId;
+    @JsonProperty("imageId")
+    private Long imgId;
 
-    @JsonProperty("ImagePath")
+    @JsonProperty("imageUrl")
     private String imgPath;
 
-    @JsonProperty("ImageTitle")
+    @JsonProperty("imageTitle")
     private String imgTitle;
 
-    @JsonProperty("IsCanceled")
+    @JsonProperty("isCanceled")
     private boolean isCanceled;
 
     @JsonCreator
-    public ImageJSON(@JsonProperty("ImageId") int imgId, 
-                        @JsonProperty("ImagePath") String imgPath,
-                            @JsonProperty("ImageTitle") String imgTitle) {
+    public ImageJSON(@JsonProperty("imageId") Long imgId, 
+                        @JsonProperty("imagePath") String imgPath,
+                            @JsonProperty("imageTitle") String imgTitle) {
         this.imgId = imgId;
         this.imgPath = imgPath;
         this.imgTitle = imgTitle;
         this.isCanceled = false;
     }
 
-    public int getImgId() {
+    public Long getImgId() {
         return imgId;
     }
 
-    public void setImgId(int imgId) {
+    public void setImgId(Long imgId) {
         this.imgId = imgId;
     }
 

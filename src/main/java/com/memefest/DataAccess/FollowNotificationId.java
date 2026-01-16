@@ -6,25 +6,25 @@ import jakarta.persistence.Embeddable;
 @Embeddable
 public class FollowNotificationId {
     
-    @Column(name = "UserId", nullable = false, insertable = false, updatable= false)
-    private int userId;
+    @Column(name = "UserId", nullable = false, updatable = false, insertable = false)
+    private Long userId;
 
-    @Column(name = "Follower_Id", nullable = false, insertable = false, updatable= false)
-    private int followerId;
+    @Column(name = "Follower_Id", nullable = false, updatable = false, insertable = false)
+    private Long followerId;
 
-    public int getUserId(){
+    public Long getUserId(){
         return userId;
     }
 
-    public int getFollower_Id(){
+    public Long getFollower_Id(){
         return followerId;
     }
     
-    public void setUserId(int userId){
+    public void setUserId(Long userId){
         this.userId = userId;
     }
 
-    public void setFollower_Id(int followerId){
+    public void setFollower_Id(Long followerId){
         this.followerId = followerId;
     }
 }

@@ -1,24 +1,17 @@
 package com.memefest.DataAccess;
 
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityResult;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.FieldResult;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.NamedNativeQueries;
-import jakarta.persistence.NamedNativeQuery;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.SqlResultSetMapping;
-import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
-
+/* 
 @NamedNativeQueries({
   @NamedNativeQuery(
     name = "SubCategory.getCategoryByTitle",
-    query = "SELECT TOP(1) S.Cat_Id as categoryId,C.Cat_Name as categoryName,S.Parent_Id as parentId FROM SUBCATEGORY S " 
+    query = "SELECT TOP(1) S.Cat_Id as categoryId, C.Cat_Name as categoryName,S.Parent_Id as parentId FROM SUBCATEGORY S " 
     + "RIGHT OUTER JOIN CATEGORY C ON S.Cat_Id = C.Cat_Id WHERE C.Cat_Name LIKE CONCAT('%'CONCAT(?, '%'))",
     resultSetMapping = "SubCategoryEntityMapping")
 })
@@ -27,15 +20,16 @@ import jakarta.persistence.Table;
     name = "SubCategoryEntityMapping",
     entities = {
       @EntityResult(
-        entityClass = SubCategory.class, 
+        entityClass = Category.class, 
         fields = {
-          @FieldResult(name = "categoryId", column = "Cat_Id"),
-          @FieldResult(name = "categoryName", column = "Cat_Name"), 
-          @FieldResult(name = "parentId", column = "Parent_Id")}
+          @FieldResult(name = "categoryId", column = "categoryId"),
+          @FieldResult(name = "categoryName", column = "categoryName"), 
+          @FieldResult(name = "parentId", column = "parentId")}
       )
     }
   )
 })
+*/
 @Entity(name = "SubCategoryEntity")
 @Table(name = "SUBCATEGORY")
 public class SubCategory{
@@ -74,19 +68,19 @@ public class SubCategory{
     return this.parent;
   }
   
-  public int getCat_Id(){
+  public Long getCat_Id(){
     return subCategoryId.getCat_Id();
   }
 
-  public void setCat_Id(int catId){
+  public void setCat_Id(Long catId){
     this.subCategoryId.setCat_Id(catId);
   }
 
-  public int getTopic_Id(){
+  public Long getTopic_Id(){
     return subCategoryId.getCat_Id();
   }
 
-  public void setTopic_Id(int categoryId){
+  public void setTopic_Id(Long categoryId){
     this.subCategoryId.setCat_Id(categoryId);
   }
 /*

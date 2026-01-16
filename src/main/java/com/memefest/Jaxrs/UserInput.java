@@ -4,10 +4,10 @@ import jakarta.ws.rs.FormParam;
 import jakarta.ws.rs.HeaderParam;
 
 public class UserInput {
-  @FormParam("firstname")
+  @FormParam("firstName")
   String firstname;
   
-  @FormParam("lastname")
+  @FormParam("lastName")
   String lastname;
   
   @FormParam("contacts")
@@ -16,7 +16,7 @@ public class UserInput {
   @FormParam("email")
   String email;
   
-  @FormParam("username")
+  @FormParam("userName")
   String username;
   
   @FormParam("password")

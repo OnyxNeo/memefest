@@ -1,6 +1,6 @@
 package com.memefest.DataAccess;
+
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
@@ -29,25 +29,25 @@ public class TopicVideo{
   @JoinColumn(name = "Topic_Id", referencedColumnName = "Topic_Id")
   private Topic topic;
 
-  @OneToOne(cascade = {CascadeType.MERGE})
+  @OneToOne(cascade = {CascadeType.PERSIST})
   @JoinColumn(name= "Vid_Id", referencedColumnName ="Vid_Id")
   private Video video;
   
-  public int getTopic_Id() {
+  public Long getTopic_Id() {
     return this.topicVidId.getTopic_Id();
   }
 
-  public void setTopic_Id(int topicId){
+  public void setTopic_Id(Long topicId){
     this.topicVidId.setTopic_Id(topicId);
   }
   
-  public void setVid_Id(int vidId) {
+  public void setVid_Id(Long vidId) {
     this.topicVidId.setVid_Id(vidId);
   }
 
   public void setTopic(Topic topic) {
     this.topic = topic;
-    this.setTopic_Id(topic.getTopic_Id());
+    this.topicVidId.setTopic_Id(topic.getTopic_Id());
   }
   
   public Topic getTopic() {

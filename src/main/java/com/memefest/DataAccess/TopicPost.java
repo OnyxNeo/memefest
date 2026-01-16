@@ -1,19 +1,12 @@
 package com.memefest.DataAccess;
 
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrimaryKeyJoinColumn;
 import jakarta.persistence.Table;
 
 @NamedQueries(
@@ -22,7 +15,7 @@ import jakarta.persistence.Table;
         query = "SELECT u FROM TopicPostEntity u WHERE u.topicPostId.topicId = :topicId"), 
   @NamedQuery(
         name = "TopicPost.findByPostId", 
-        query = "SELECT u FROM TopicPostEntity u WHERE u.topicPostId.postId = :topicId") 
+        query = "SELECT u FROM TopicPostEntity u WHERE u.topicPostId.postId = :postId") 
 })
 @Entity(name = "TopicPostEntity")
 @Table(name = "TOPIC_POST")
@@ -31,11 +24,12 @@ public class TopicPost{
     @EmbeddedId
     TopicPostId topicPostId = new TopicPostId();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.ALL )
+    //PrimaryKeyJoinColumn(name ="Topic_Id", referencedColumnName= "Topic_Id")
     @JoinColumn(name = "Topic_Id", referencedColumnName = "Topic_Id")
     private Topic topic;
 
-    @OneToOne(cascade = CascadeType.MERGE)
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "Post_Id", referencedColumnName = "Post_Id")
     private Post post;
         
@@ -48,11 +42,11 @@ public class TopicPost{
         this.topicPostId.setTopic_Id(topic.getTopic_Id());
     }
 
-    public int getTopic_Id(){
+    public Long getTopic_Id(){
         return this.topicPostId.getTopic_Id();
     }
 
-    public void setTopic_Id(int topicId){
+    public void setTopic_Id(Long topicId){
         this.topicPostId.setTopic_Id(topicId);
     }
 
@@ -64,11 +58,11 @@ public class TopicPost{
         this.post = post;
     }
 
-    public int getPost_Id(){
+    public Long getPost_Id(){
         return topicPostId.getPost_Id();
     }
 
-    public void setPost_Id(int postId){
+    public void setPost_Id(Long postId){
         this.topicPostId.setPost_Id(postId);
     }
 }

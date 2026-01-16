@@ -23,7 +23,7 @@ import jakarta.persistence.FieldResult;
 
 @NamedNativeQueries({
     @NamedNativeQuery(name = "Image.getImageByTitle",
-    query = "SELECT TOP(1) * FROM IMAGES I " 
+    query = "SELECT TOP(1) FROM IMAGES I " 
                 + "WHERE I.Img_Title LIKE CONCAT('%', :title, '%')", resultSetMapping = "ImageEntityMapping"
     )
 })
@@ -32,7 +32,7 @@ import jakarta.persistence.FieldResult;
         name = "ImageEntityMapping",
         entities = {
             @EntityResult(
-                entityClass = TopicPost.class,
+                entityClass = Image.class,
                 fields = {
                     @FieldResult(name = "imageId", column = "Img_Id"),
                     @FieldResult(name = "imageTitle", column = "Img_Title"),
@@ -49,7 +49,8 @@ public class Image {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Img_Id")
-    private int imageId;
+    //@UuidGenerator
+    private Long imageId;
     
     @Column(name = "Img_Path")
     private String imagePath;
@@ -58,25 +59,26 @@ public class Image {
     private  String imageTitle;
 
     @ManyToOne(cascade = {CascadeType.PERSIST})
-    @JoinColumn(name = "UserId")
+    //@JoinColumn(name = "UserId")
     private User user;
 
-    @OneToOne(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "image", optional =  true)
-    private TopicImage topic;
+    @OneToMany(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "image")
+    @JoinColumn(referencedColumnName = "Img_Id")
+    private Set<TopicImage> topic;
 
-    @OneToOne(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "image", optional =  true)
-    private PostImage post;
+    @OneToMany(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "image")
+    private Set<PostImage> post;
     
-    @OneToOne(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "image", optional =  true)
-    @JoinColumn(name = "Img_Id")
-    private EventImage event;
+    @OneToMany(fetch =FetchType.LAZY, cascade = {CascadeType.ALL}, mappedBy = "image")
+    //@JoinColumn(name = "Img_Id")
+    private Set<EventImage> event;
 
 
-    public int getImg_Id() {
+    public Long getImg_Id() {
         return this.imageId;
     }
 
-    public void setImg_Id(int imgId){
+    public void setImg_Id(Long imgId){
         this.imageId = imgId;
     }
 

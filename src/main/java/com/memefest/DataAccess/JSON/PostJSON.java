@@ -1,6 +1,7 @@
 package com.memefest.DataAccess.JSON;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFilter;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
@@ -13,44 +14,56 @@ import java.time.LocalDateTime;
 import java.util.Set;
 
 @JsonRootName("Post")
-@JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "PostId")
+@JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "postId")
+@JsonFilter("PostView")
 public class PostJSON {
-  @JsonProperty("PostId")
-  private int postId;
+  @JsonProperty("id")
+  private Long postId;
   
-  @JsonProperty("Comment")
-  private String comment;
-  
-  @JsonProperty("Created")
+  @JsonProperty("createdAt")
   @JsonSerialize(using = CustomLocalDateTimeSerializer.class)
   @JsonDeserialize(using = CustomLocalDateTimeDeserializer.class)
   private LocalDateTime created;
   
-  @JsonProperty("Upvotes")
+  @JsonProperty("likes")
   private int upvotes;
   
-  @JsonProperty("Downvotes")
+  @JsonProperty("body")
+  private String comment;
+
+  @JsonProperty("downvotes")
   private int downvotes;
 
-  @JsonProperty("User")
+  @JsonProperty("user")
   private UserJSON user;
 
-  @JsonProperty("Categories")
+  @JsonProperty("categories")
   private Set<CategoryJSON> categories;
 
-  @JsonProperty("CanceledCategories")
+  @JsonProperty("taggedUsers")
+  private Set<UserJSON> taggedUsers;
+
+  @JsonProperty("canceledCategories")
   private Set<CategoryJSON> canceledCats;
 
-  @JsonProperty("Cancel")
+  @JsonProperty("cancel")
   private boolean canceled;
+
+  @JsonProperty("isLiked")
+  private boolean liked;
+
+  @JsonProperty("isDownvoted")
+  private boolean downvoted;
+
   
   @JsonCreator
-  public PostJSON(@JsonProperty("PostId") int postId, @JsonProperty("Comment") String comment, 
-                      @JsonProperty("Created") LocalDateTime created, 
-                      @JsonProperty("Upvotes") int upvotes, @JsonProperty("Downvotes") int downvotes,
-                      @JsonProperty("User") UserJSON user, 
-                      @JsonProperty("Categories") Set<CategoryJSON> categories,
-                      @JsonProperty("CanceledCategories")Set<CategoryJSON> canceledCats) {
+  public PostJSON(@JsonProperty("id") Long postId, @JsonProperty("body") String comment, 
+                      @JsonProperty("createdAt") LocalDateTime created, 
+                      @JsonProperty("likes") int upvotes, @JsonProperty("downvotes") int downvotes,
+                      @JsonProperty("user") UserJSON user,
+                      @JsonProperty("categories") Set<CategoryJSON> categories,
+                      @JsonProperty("canceledCategories")Set<CategoryJSON> canceledCats,
+                      @JsonProperty("taggedUsers") Set<UserJSON> taggedUsers) {
     this.postId = postId;
     this.comment = comment;
     this.created = created;
@@ -59,94 +72,123 @@ public class PostJSON {
     this.user = user;
     this.categories = categories;
     this.canceledCats = canceledCats;
+    this.taggedUsers = taggedUsers;
+    this.liked = false;
+    this.downvoted = false;
   }
   
-  @JsonProperty("PostId")
-  public int getPostId() {
+  @JsonProperty("taggedUsers")
+  public Set<UserJSON> getTaggedUsers(){
+    return this.taggedUsers;
+  }
+
+  public void setLiked(boolean liked){
+    this.liked = liked;
+  }
+
+  public boolean getLiked(){
+    return this.liked;
+  }
+
+  public void setDownvoted(boolean downvoted){
+    this.downvoted = downvoted;
+  }
+
+  public boolean getDownvoted(){
+    return this.downvoted;
+  }
+
+  @JsonProperty("taggedUsers")
+  public void setTaggedUsers(Set<UserJSON> users){
+    this.taggedUsers = users;
+  }
+
+  @JsonProperty("id")
+  public Long getPostId() {
     return this.postId;
   }
   
-  @JsonProperty("Comment")
+  @JsonProperty("body")
   public String getComment() {
     return this.comment;
   }
   
-  @JsonProperty("Created")
+  @JsonProperty("createdAt")
   public LocalDateTime getCreated() {
     return this.created;
   }
   
-  @JsonProperty("Upvotes")
+  @JsonProperty("likes")
   public int getUpvotes() {
     return this.upvotes;
   }
   
-  @JsonProperty("Downvotes")
+  @JsonProperty("downvotes")
   public int getDownvotes() {
     return this.downvotes;
   }
   
-  @JsonProperty("User")
+  @JsonProperty("user")
   public UserJSON getUser() {
     return this.user;
   }
   
-  @JsonProperty("PostId")
-  public void setPostId(int postId) {
+  @JsonProperty("id")
+  public void setPostId(Long postId) {
     this.postId = postId;
   }
   
-  @JsonProperty("Comment")
+  @JsonProperty("body")
   public void setComment(String comment) {
     this.comment = comment;
   }
   
-  @JsonProperty("Created")
+  @JsonProperty("createdAt")
   public void setCreated(LocalDateTime created) {
     this.created = created;
   }
   
-  @JsonProperty("Upvotes")
+  @JsonProperty("likes")
   public void setUpvotes(int upvotes) {
     this.upvotes = upvotes;
   }
   
-  @JsonProperty("Downvotes")
+  @JsonProperty("downvotes")
   public void setDownvotes(int downvotes) {
     this.downvotes = downvotes;
   }
   
-  @JsonProperty("Cancel")
+  @JsonProperty("cancel")
   public boolean isCancelled() {
     return this.canceled;
   }
   
-  @JsonProperty("Cancel")
+  @JsonProperty("cancel")
   public void setCanceled(boolean canceled) {
     this.canceled = canceled;
   }
   
-  @JsonProperty("User")
+  @JsonProperty("user")
   public void setUser(UserJSON user) {
     this.user = user;
   }
 
-  @JsonProperty("Categories")
+  @JsonProperty("categories")
   public void setCategories(Set<CategoryJSON> categories){
     this.categories = categories;
   }
   
-  @JsonProperty("Categories")
+  @JsonProperty("categories")
   public Set<CategoryJSON> getCategories(){
     return this.categories;
   }
 
-  @JsonProperty("CanceledCategories")
+  @JsonProperty("canceledCategories")
   public void setCanceledCategories(Set<CategoryJSON> canceledCats){
     this.canceledCats = canceledCats;
   }
 
-  @JsonProperty("CanceledCategories")
+  @JsonProperty("canceledCategories")
   public Set<CategoryJSON> getCanceledCategories(){
     return this.canceledCats;
   }

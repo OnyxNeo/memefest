@@ -1,14 +1,13 @@
 package com.memefest.DataAccess;
 
+
 import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
 @NamedQueries(
@@ -30,19 +29,19 @@ public class EventImage{
   @JoinColumn(name = "Img_Id", referencedColumnName = "Img_Id")
   private Image image;
 
-  @OneToOne(cascade = {CascadeType.MERGE})
+  @ManyToOne(cascade = {CascadeType.MERGE})
   @JoinColumn(name= "Event_Id", referencedColumnName ="Event_Id")
   private Event event;
   
-  public int getImg_Id() {
+  public Long getImg_Id() {
     return this.eventImgId.getImg_Id();
   }
 
-  public void setImg_Id(int imgId){
+  public void setImg_Id(Long imgId){
     this.eventImgId.setImg_Id(imgId);
   }
   
-  public void setEvent_Id(int eventId) {
+  public void setEvent_Id(Long eventId) {
     this.eventImgId.setEvent_Id(eventId);
   }
 

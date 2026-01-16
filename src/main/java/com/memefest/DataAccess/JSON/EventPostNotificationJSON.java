@@ -13,7 +13,7 @@ public class EventPostNotificationJSON extends PostNotificationJSON{
     private EventPostJSON eventPost;
 
     @JsonCreator
-    public EventPostNotificationJSON(@JsonProperty("NotificationID") int notId,
+    public EventPostNotificationJSON(@JsonProperty("NotificationID") Long notId,
                                     @JsonProperty("EventPost") EventPostJSON eventPost,
                                         @JsonProperty("TimeStamp") LocalDateTime time, 
                                             @JsonProperty("User") UserJSON user,

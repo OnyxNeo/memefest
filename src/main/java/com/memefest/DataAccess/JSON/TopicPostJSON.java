@@ -8,19 +8,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class TopicPostJSON extends PostJSON {
 
-    @JsonProperty("Topic")
+    @JsonProperty("topic")
     private TopicJSON topic;
 
   @JsonCreator
-  public TopicPostJSON(@JsonProperty("PostId") int postId,
-     @JsonProperty("Comment") String comment, 
-      @JsonProperty("Created") LocalDateTime created, @JsonProperty("Upvotes") int upvotes,
-         @JsonProperty("Downvotes") int downvotes,
-          @JsonProperty("User") UserJSON user,
-           @JsonProperty("Topic") TopicJSON topic,
-           @JsonProperty("Categories") Set<CategoryJSON> categories,
-                      @JsonProperty("CanceledCategories")Set<CategoryJSON> canceledCats) {
-    super(postId, comment,created,upvotes, downvotes, user, categories, canceledCats);
+  public TopicPostJSON(@JsonProperty("id") Long postId,
+     @JsonProperty("comment") String comment, 
+      @JsonProperty("createdAt") LocalDateTime created, @JsonProperty("likes") int upvotes,
+         @JsonProperty("downvotes") int downvotes,
+          @JsonProperty("user") UserJSON user,
+           @JsonProperty("topic") TopicJSON topic,
+           @JsonProperty("categories") Set<CategoryJSON> categories,
+                      @JsonProperty("canceledCategories")Set<CategoryJSON> canceledCats,
+                      @JsonProperty("taggedUsers") Set<UserJSON> taggedUsers) {
+    super(postId, comment,created,upvotes, downvotes, user, categories, canceledCats, taggedUsers);
     this.topic = topic;
   }
 
