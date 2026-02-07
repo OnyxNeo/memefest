@@ -122,7 +122,7 @@ public class JwtAuthIdentityStore implements IdentityStore {
   
   public static UserSecurityJSON createUserAccessToken(UserJSON userJSON) {
     LocalDateTime allocatedDate = LocalDateTime.now();
-    LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(2);
+    LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(15);
     String token = null;
     try {
       KeyPair keyPair = CustomKeyLocator.loadFromJKS();
@@ -174,14 +174,12 @@ public class JwtAuthIdentityStore implements IdentityStore {
     } catch (CertificateException ex) {
       ex.printStackTrace();
     } 
+    
     String token = ((JwtBuilder)((JwtBuilder.BuilderHeader)((JwtBuilder.BuilderHeader)((JwtBuilder.BuilderHeader)Jwts.builder().header().add("exp", expiryDate.toString())).add("iat", allocatedDate.toString())).keyId(keyId)).and()).issuer("JiniceServer").expiration(Date.from(expiryDate.atZone(ZoneId.systemDefault()).toInstant())).issuedAt(Date.from(allocatedDate.atZone(ZoneId.systemDefault()).toInstant())).claim("user", userJSON).json((Serializer)new JacksonSerializer(mapper)).encodePayload(true).signWith(keyPair.getPrivate()).compact();
-    UserSecurityJSON userSecurity = null;
-    if (userJSON.getUserSecurity() != null) {
-      userSecurity = userJSON.getUserSecurity();
-      userSecurity.setRefreshTkn(token);
-    } else {
-      userSecurity = new UserSecurityJSON(null, null, token, userJSON.getUserId(), userJSON.getUsername());
-    } 
+    UserSecurityJSON userSecurity = new UserSecurityJSON(null, null, token, userJSON.getUserId(), userJSON.getUsername());
+    String refreshTkn = userSecurity.getRefreshTkn();
+    userSecurity = createUserAccessToken(userJSON);
+    userSecurity.setRefreshTkn(refreshTkn); 
     return userSecurity;
   }
   

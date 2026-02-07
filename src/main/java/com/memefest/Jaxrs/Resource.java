@@ -94,6 +94,25 @@ public abstract class Resource {
         return filter;
     }
 
+    private static SimpleBeanPropertyFilter commentPublicViewFilter(){
+        SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAllExcept(
+            "cancel","Cancel",
+            "downvotes", "Downvotes",
+            "Categories", "categories",
+            "canceledCategories", "CanceledCategories",
+            "postId","PostId",
+            "id", "Id",
+            "body", "Body",
+            "isLiked",
+            "isDownvoted",
+            "Images",
+            "Videos","videos",
+            "taggedUsers",
+            "images"
+        );
+        return filter;
+    }
+
     private static SimpleBeanPropertyFilter postWithReplyView(){
         SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAllExcept(
             "cancel","Cancel",
@@ -113,6 +132,17 @@ public abstract class Resource {
             "categories"
         );
         return filter;
+    }
+
+    private static SimpleBeanPropertyFilter commentExtendedViewFilter(){
+    SimpleBeanPropertyFilter filter = SimpleBeanPropertyFilter.serializeAllExcept(
+            "cancel","Cancel",
+            "downvotes", "Downvotes",
+            "canceledCategories", "CanceledCategories",
+            "categories",
+            "postId", "PostId"
+    );
+    return filter;
     }
 
     private static SimpleBeanPropertyFilter categoryExtendedViewFilter(){
@@ -221,12 +251,20 @@ public abstract class Resource {
         mapper.setFilterProvider(provider);
     }
 
+    protected void commentExtendedView(){
+        Map<String, SimpleBeanPropertyFilter> publicFilters = getPublicViewFilters();
+        publicFilters.put("CommentView", commentExtendedViewFilter());
+        FilterProvider provider = setFilters(publicFilters);
+        mapper.setFilterProvider(provider);
+    }    
+
     protected static Map<String,SimpleBeanPropertyFilter> getPublicViewFilters(){
         Map<String, SimpleBeanPropertyFilter> filters= new HashMap<String, SimpleBeanPropertyFilter>();
         filters.put("TopicView",topicPublicViewFilter());
         filters.put("EventView",eventPublicViewFilter());
         filters.put("CategoryView", categoryPublicViewFilter());
         filters.put("UserView", userPublicViewFilter());
+        filters.put("CommentView", commentPublicViewFilter());
         filters.put("PostView", postPublicViewFilter());
         filters.put("SponsorView", sponsorPublicViewFilter());
         return filters;

@@ -24,7 +24,7 @@ public interface UserOperations {
 
   public void removeFollower(UserJSON user, UserJSON follower);
   
-  public void editUser(UserJSON user);
+  public UserJSON editUser(UserJSON user);
 
   public User getUserEntity(UserJSON user);
 

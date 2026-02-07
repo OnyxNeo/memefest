@@ -23,7 +23,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
-import jakarta.ws.rs.core.Response.ResponseBuilder;
 
 @Path("Category")
 @PermitAll
@@ -94,9 +93,8 @@ public class CategoryResource extends Resource{
     @Produces({"application/json"})
     public Response setCategory(String cat) throws JsonProcessingException{
         CategoryJSON category= mapper.readValue(cat, CategoryJSON.class);
-        catOps.editCategory(category);
-        CategoryJSON catInfo = catOps.getCategoryInfo(category);
-        return Response.ok().entity(mapper.writeValueAsString(catInfo)).build(); 
+        category = catOps.editCategory(category);
+        return Response.ok().entity(mapper.writeValueAsString(category)).build(); 
     }
 
     @PUT

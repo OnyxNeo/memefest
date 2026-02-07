@@ -2,7 +2,7 @@
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       version="5.0">
         <display-name>ODS_ResrcSysApp</display-name>
-          <servlet>
+        <servlet>
     <servlet-name>com.memefest.Jaxrs.JiniceRest</servlet-name>
     <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
 
@@ -29,6 +29,7 @@
       <param-value>/WEB-INF/classes</param-value>
     </init-param>
     
+
     <!--
     <filter>
       <filter-name>AuthenticationFilter</filter-name>
@@ -40,6 +41,7 @@
       <url-pattern>/*</url-pattern>
     </filter-mapping>
     -->
+    <async-supported>true</async-supported>
     <load-on-startup>1</load-on-startup>
     <security-role-ref>
       <role-name>User</role-name>

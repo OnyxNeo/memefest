@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 @JsonRootName("image")
 @JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "ImageId")
-public class ImageJSON {
+public class ImageJSON extends MediaJSON{
     
     @JsonProperty("imageId")
     private Long imgId;
@@ -62,6 +62,5 @@ public class ImageJSON {
 
     public void setCanceled(boolean canceled) {
         this.isCanceled = canceled;
-    }
-    
+    }    
 }

@@ -15,7 +15,7 @@ public interface CategoryOperations {
     
     public Set<TopicJSON> getCategoryTopics(CategoryJSON category);
 
-    public void editCategory(CategoryJSON category);
+    public CategoryJSON editCategory(CategoryJSON category);
 
     public void createCategoryFollowers(CategoryJSON category);
     

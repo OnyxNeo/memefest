@@ -5,9 +5,9 @@ import com.memefest.DataAccess.JSON.VideoJSON;
 
 public interface VideoOperations {
     
-    public void createVideo(VideoJSON video);
+    public VideoJSON createVideo(VideoJSON video);
 
-    public void editVideo(VideoJSON video);
+    public VideoJSON editVideo(VideoJSON video);
 
     public void removeVideo(VideoJSON video);
 

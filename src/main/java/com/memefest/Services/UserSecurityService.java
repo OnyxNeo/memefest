@@ -6,7 +6,7 @@ import com.memefest.DataAccess.JSON.UserSecurityJSON;
 import jakarta.ejb.Local;
 @Local
 public interface UserSecurityService {
-  void createUser(UserJSON paramUserJSON);
+  UserJSON createUser(UserJSON paramUserJSON);
   
   void setSecurityDetails(UserSecurityJSON paramUserSecurityJSON);
   

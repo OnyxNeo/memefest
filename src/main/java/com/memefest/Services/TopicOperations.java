@@ -9,8 +9,6 @@ import com.memefest.DataAccess.JSON.TopicJSON;
 //@Local
 public interface TopicOperations {
 
-    public void createTopic(TopicJSON topic);
-
     //public Set<CategoryJSON> getTopicCategories(TopicJSON topic);
 
     public void createTopicCategories(TopicJSON topic);
@@ -23,7 +21,7 @@ public interface TopicOperations {
 
     public void editTopicFollowers(TopicJSON topic);
 
-    public void editTopic(TopicJSON topic);
+    public TopicJSON editTopic(TopicJSON topic);
 
     public void removeTopic(TopicJSON topic);
 

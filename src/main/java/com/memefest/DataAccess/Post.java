@@ -18,19 +18,20 @@ import jakarta.persistence.NamedNativeQuery;
 import jakarta.persistence.NamedQueries;
 import jakarta.persistence.NamedQuery;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.SqlResultSetMapping;
 import jakarta.persistence.SqlResultSetMappings;
 import jakarta.persistence.Table;
 
 @NamedNativeQueries({
     @NamedNativeQuery(name = "Post.getPostByComment",
-        query = "SELECT TOP(1) P.Post_Id as postId, P.Comment as comment, P.Created as created," 
+        query = "SELECT TOP(1) P.Post_Id as postId, P.Comment  as comment, P.Created as created," 
                    + " P.UserId as userId FROM POST P "
-                + "WHERE P.Comment LIKE CONCAT(CONCAT( '%',?),'%')  AND P.Post_Id NOT IN(SELECT REPLY.Post_Id FROM REPLY) AND "
-                + "P.Post_Id NOT IN (SELECT EVENT_POST.Post_Id FROM EVENT_POST) AND P.Post_Id NOT IN "
-                + "(SELECT TOPIC_POST.Post_Id FROM TOPIC_POST) AND P.Post_Id NOT IN (SELECT JOKEOFDAY_POST.Post_Id FROM JOKEOFDAY_POST)"
+                + "WHERE CONTAINS(P.Comment,?)"
         , resultSetMapping = "PostEntityMapping"
     ),
+    /*  
+    */
     @NamedNativeQuery(name = "Post.searchByComment",
         query = "SELECT P.Post_Id as postId, P.Comment as comment, P.Created as created," 
                    + " P.UserId as userId FROM POST P "
@@ -67,7 +68,7 @@ import jakarta.persistence.Table;
 @NamedQueries({
     @NamedQuery(
         name = "Post.getAll",
-        query = "SELECT po FROM PostEntity po WHERE po.postId NOT IN (SELECT pr.post.postId FROM PostReplyEntity pr)"
+        query = "SELECT po FROM PostEntity po WHERE po.postId NOT IN (SELECT pr.postReplyId.postId FROM PostReplyEntity pr)"
     )
 })
 @Entity(name = "PostEntity")
@@ -123,6 +124,9 @@ public class Post {
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "parent")
     private Set<PostReply> postWithReplys;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post", optional = true )
+    private PostReply replyTo;
 
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, mappedBy = "post")
     private Set<PostNotification> notifications;
@@ -250,4 +254,5 @@ public class Post {
     public Set<EventPost> getEventPosts(){
         return this.eventPosts;
     }
+    
 }

@@ -31,7 +31,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
-import jakarta.ejb.PostActivate;
 import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
@@ -52,59 +51,34 @@ public class UserService  implements UserSecurityService, UserOperations, AdminO
     @EJB
     private PostOperations postOps;
 
-    //@PersistenceUnit(unitName = "userServiceData")
-
     @EJB
     private DataSourceOps dataSourceOps;
 
-  //  @Inject
-//    private DataSourceCredentials dataSourceCreds;
-
-    //private EntityManagerFactoryWrapper factoryWrapper;
-
-    //@Resource(name =  "DataSource/Memefest")
-    //private DataSource dataSource;
-
-    //@Resource
-    //private UserTransaction transaction;
-
-    //@PersistenceContext(unitName = "PostServicePersistenceUnit", type = PersistenceContextType.TRANSACTION)
     //@TransactionScoped
     private EntityManager entityManager;
 
     
     @PostConstruct
-    @PostActivate
+    //@PostActivate
     public void init(){
-        //entityManager = dataSourceOps.getPersistenceContext().getEmf().createEntityManager();
-        //entityManager.setProperty(PersistenceUnitProperties.JDBC_PASSWORD, password);
-        //entityManager.setProperty(PersistenceUnitProperties.JDBC_USER, username);
         this.entityManager = dataSourceOps.getEntityManagerFactory().createEntityManager();
 
     }
     
-
     @PreDestroy
+    //@PrePassivate
     public void destroy(){
         //factory.close();
         entityManager.close();
     }  
 
-    /* 
-    public void createBaseUser(){
-    }
-    */
-
-    //needs transactions
-    //clean up json objects
-    //prevent redundan
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void createUser(String username, String firstName,
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    public UserJSON createUser(String username, String firstName,
                                 //String middleName
                                 String lastName, 
                                     int contacts, String email, boolean verified, String password, String accessToken,
                                         String refreshToken)throws RollbackException{
-        //entityManager.joinTransaction();
+        entityManager.joinTransaction();
         User newUser = new User();
         //entityManager.joinTransaction();
         //newUser.setUserId(0);
@@ -119,6 +93,7 @@ public class UserService  implements UserSecurityService, UserOperations, AdminO
         securityDetails.setUser(newUser);
         */
         entityManager.persist(newUser);
+        //entityManager.joinTransaction();
         entityManager.flush();
         UserSecurity securityDetails = new UserSecurity();
         securityDetails.setUserId(newUser.getUserId());
@@ -128,10 +103,17 @@ public class UserService  implements UserSecurityService, UserOperations, AdminO
         newUser.setSecurityDetails(securityDetails);
         //entityManager.persist(newUser);
         entityManager.persist(newUser);
+        UserSecurityJSON userSecurity = new UserSecurityJSON(accessToken, null, refreshToken, null, username);
+        
+        UserJSON user = new UserJSON(newUser.getUserId(), email, username, contacts, verified, firstName,
+                    lastName, userSecurity, null, null, null);
+        return user;
     }
     
-    public void createUser(UserJSON userJSON) throws RollbackException{
-        createUser(userJSON.getUsername(), userJSON.getFirstName(), 
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    public UserJSON createUser(UserJSON userJSON) throws RollbackException{
+        entityManager.joinTransaction();
+        return createUser(userJSON.getUsername(), userJSON.getFirstName(), 
                         //userJSON.getMiddleName(),
                         userJSON.getLastName(), userJSON.getContacts(), userJSON.getEmail() , userJSON.isVerified(), 
                             userJSON.getUserSecurity().getPassword(), userJSON.getUserSecurity().getAccessTkn(), 
@@ -322,8 +304,9 @@ public class UserService  implements UserSecurityService, UserOperations, AdminO
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //commit the followings of user from category entity
-    public void editUser(UserJSON user){
+    public UserJSON editUser(UserJSON user){
         try {
             User userEntity = getUserEntity(user);
             userEntity.setEmail(user.getEmail());
@@ -332,9 +315,9 @@ public class UserService  implements UserSecurityService, UserOperations, AdminO
             userEntity.setPhone_No(user.getContacts());
             userEntity.setUsername(user.getUsername());
             entityManager.merge(userEntity);
+            return user;
         } catch (NoResultException e) {
-            createUser(user);
-            return;
+            return createUser(user);
         }
     }
 

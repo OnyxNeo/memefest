@@ -23,8 +23,11 @@ import jakarta.persistence.Table;
         query = "SELECT u FROM JokeOfDayEntity u WHERE u.timestamp BETWEEN :startDate AND :endDate"),
     @NamedQuery(
         name = "JokeOfDay.getOnDay",
-        query =  "SELECT u FROM JokeOfDayEntity u WHERE FUNCTION('YEAR', u.ForDay) = :year AND" 
-                    + " FUNCTION('MONTH', u.ForDay) = :month AND FUNCTION('DAYOFMONTH', u.ForDay) = :day"
+        query =  "SELECT u FROM JokeOfDayEntity u WHERE u.timestamp = :date"
+        /* 
+        query =  "SELECT u FROM JokeOfDayEntity u WHERE FUNCTION('YEAR', u.timestamp) = :year AND" 
+                    + " FUNCTION('MONTH', u.timestamp) = :month AND FUNCTION('DAY', u.timestamp) = :day"
+        */
     ),
     @NamedQuery(
         name = "JokeOfDay.getComments",
@@ -43,7 +46,7 @@ public class JokeOfDay {
     @Column(name = "UserId", nullable = false, insertable =  false, updatable = false)
     private Long userId;
 
-    @Column(name = "Joke")
+    @Column(name = "Punchline")
     private String punchline;
 
     @Column(name = "ForDay")

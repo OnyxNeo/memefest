@@ -41,12 +41,12 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     RolesAllowed allowed = method.<RolesAllowed>getAnnotation(RolesAllowed.class);
     if (allowed != null)
       performAuthorization(allowed.value()); 
-    if (this.resourceInfo.getResourceClass().isAnnotationPresent(PermitAll.class) || method
-      .isAnnotationPresent(PermitAll.class))
+    if ((this.resourceInfo.getResourceClass().isAnnotationPresent(PermitAll.class) && !(method
+      .isAnnotationPresent(RolesAllowed.class))) || method.isAnnotationPresent(PermitAll.class))
       return; 
     if (!isAuthenticated(requestContext))
       throw new AuthenticationDenied("Authentication required");
-      requestContext.setSecurityContext(new JaxrsSecurityContext(secContext.getCallerPrincipal(), true, "BASIC/JWT"));
+    requestContext.setSecurityContext(new JaxrsSecurityContext(secContext.getCallerPrincipal(), true, "BASIC/JWT"));
   }
   
   private void performAuthorization(String[] roles) {

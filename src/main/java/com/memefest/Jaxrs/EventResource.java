@@ -17,7 +17,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.OPTIONS;
-import jakarta.ws.rs.PUT;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
@@ -117,19 +117,20 @@ public class EventResource extends Resource{
         return Response.ok().build();
     }
 
-    @PUT
+    @POST
     @Consumes("application/json")
     @Produces("application/json")
-    public Response setEvent(String eventEntity)throws JsonProcessingException{
+    public Response newEvent(String eventEntity)throws JsonProcessingException{
             EventJSON event = mapper.readValue(eventEntity, EventJSON.class);
             event.setPostedBy(new UserJSON(
                 "lando"));
                 // /context.getUserPrincipal().getName()));
-            eventOps.editEvent(event);
-            event = eventOps.getEventInfo(event);
+            event = eventOps.editEvent(event);
             eventEntity = mapper.writeValueAsString(event);
             return Response.ok().entity(eventEntity).build();
     }   
+
+
 
     @OPTIONS
     @Path("/{EventId: \\d+}")

@@ -55,6 +55,14 @@ public class PostJSON {
   @JsonProperty("isDownvoted")
   private boolean downvoted;
 
+  @JsonProperty("Images")
+  private Set<ImageJSON> images;
+
+  @JsonProperty("Videos")
+  private Set<VideoJSON> videos;
+
+  @JsonProperty("commentCount")
+  private int commentCount;
   
   @JsonCreator
   public PostJSON(@JsonProperty("id") Long postId, @JsonProperty("body") String comment, 
@@ -191,6 +199,36 @@ public class PostJSON {
   @JsonProperty("canceledCategories")
   public Set<CategoryJSON> getCanceledCategories(){
     return this.canceledCats;
+  }
+
+  @JsonProperty("videos")
+  public Set<VideoJSON> getVideos(){
+    return this.videos;
+  }
+
+  @JsonProperty("videos")
+  public void setVideos(Set<VideoJSON> videos){
+    this.videos = videos;
+  }
+
+  @JsonProperty("images")
+  public Set<ImageJSON> getImages(){
+    return this.images;
+  }
+
+  @JsonProperty("images")
+  public void setImages(Set<ImageJSON> images){
+    this.images = images;
+  }
+
+  @JsonProperty("commentCount")
+  public int getCommentCount(){
+    return this.commentCount;    
+  }
+
+  @JsonProperty("commentCount")
+  public void setCommentCount(int commentCount){
+    this.commentCount = commentCount;
   }
 
 }

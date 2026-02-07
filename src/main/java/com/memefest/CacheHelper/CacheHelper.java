@@ -29,8 +29,12 @@ public class CacheHelper {
                   .withCache("notificationsCache", (Builder)CacheConfigurationBuilder
                   .newCacheConfigurationBuilder(Long.class, String.class, (Builder)ResourcePoolsBuilder.heap(100L))
                   .withExpiry(ExpiryPolicyBuilder.timeToIdleExpiration(Duration.
-                  ofMinutes(10L)))).build();
-                this.cacheManager.init();
+                  ofMinutes(10L))))
+                    .withCache("userPasswordResetTokenCache",
+                      (Builder)CacheConfigurationBuilder.newCacheConfigurationBuilder(Long.class, String.class,
+                      (Builder)ResourcePoolsBuilder.heap(100L)).withExpiry(ExpiryPolicyBuilder
+                      .timeToIdleExpiration(Duration.ofMinutes(10L)))).build();
+                        this.cacheManager.init();
   }
   
   @PreDestroy

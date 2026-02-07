@@ -17,6 +17,7 @@ import com.memefest.DataAccess.JSON.TopicJSON;
 import com.memefest.DataAccess.JSON.TopicPostJSON;
 import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.Services.PostOperations;
+import com.memefest.Services.UserOperations;
 
 import jakarta.annotation.security.PermitAll;
 import jakarta.annotation.security.RolesAllowed;
@@ -43,6 +44,9 @@ public class PostResource extends Resource{
     
     @Inject
     private PostOperations postOps;
+
+    @Inject
+    private UserOperations userOps;
 
     @Context
     private SecurityContext context;
@@ -95,8 +99,9 @@ public class PostResource extends Resource{
         PostJSON post = mapper.readValue(postEntity, PostJSON.class);
         post.setCreated(LocalDateTime.now());
         post.setUser(new UserJSON(context.getUserPrincipal().getName()));
-        postOps.editPost(post);
-        post = postOps.getPostInfo(post);
+        post = postOps.editPost(post);
+        UserJSON user = userOps.getUserInfo(new UserJSON(context.getUserPrincipal().getName()));
+        post.setUser(user);
         return Response.ok().entity(mapper.writeValueAsString(post)).build();    
     
     }
@@ -188,7 +193,6 @@ public class PostResource extends Resource{
         ListIterator<PostJSON> iterator = posts.stream().collect(Collectors.toList()).listIterator();
         while(iterator.hasNext()) 
            try {
-                 
                 if(iterator.nextIndex() != 0)
                     builder.append(",");
                 PostJSON comment = postOps.getPostInfo(iterator.next());
@@ -247,9 +251,8 @@ public class PostResource extends Resource{
                     context.getUserPrincipal().getName()));
             }
             post.setPosts(comments);
-            postOps.editPostWithReply(post);
-            PostJSON basicInfo = postOps.getPostInfo(comment); 
-            return Response.ok().entity(mapper.writeValueAsString(basicInfo)).build();
+            post = postOps.editPostWithReply(post);
+            return Response.ok().entity(mapper.writeValueAsString(post.getPosts().iterator().next())).build();
         }
     }
 

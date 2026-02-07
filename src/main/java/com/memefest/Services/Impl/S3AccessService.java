@@ -2,7 +2,6 @@ package com.memefest.Services.Impl;
 
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.core.sync.ResponseTransformer;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services. s3.S3Client;
 import software.amazon.awssdk.services.s3.model.*;
@@ -17,14 +16,13 @@ import software.amazon.awssdk.services.kms.model.*;
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
-
+import java.nio.ByteBuffer;
 /* 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 */
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -33,7 +31,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
-import com.memefest.DataAccess.JSON.VideoMetadataJSON;
+import com.memefest.DataAccess.JSON.ContentMetadataJSON;
+import com.memefest.DataAccess.JSON.MediaType;
+import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.Services.S3AccessOperations;
 
 import jakarta.annotation.PostConstruct;
@@ -192,16 +192,16 @@ public class S3AccessService implements S3AccessOperations{
     /**
      * Upload video from InputStream
      */
-
-    public CompletableFuture<VideoMetadataJSON> uploadVideo(String videoId, InputStream videoStream, 
+/*
+    public CompletableFuture<ContentMetadataJSON> uploadVideo(String videoId, InputStream videoStream, 
                                                        String originalFileName, long contentLength,
                                                        Map<String, String> customMetadata) {
         return CompletableFuture.supplyAsync(() -> {
             try {
-                validateVideoFileName(originalFileName);
+                //validateVideoFileName(originalFileName);
                 
                 String contentType = determineContentType(originalFileName);
-                VideoMetadataJSON metadata = new VideoMetadataJSON(videoId, originalFileName, contentType, contentLength);
+                ContentMetadataJSON metadata = new ContentMetadataJSON(videoId, originalFileName, contentType, contentLength);
                 if (customMetadata != null) {
                     metadata.setCustomMetadata(customMetadata);
                 }
@@ -239,6 +239,52 @@ public class S3AccessService implements S3AccessOperations{
             }
         }, executorService);
     }
+*/
+    public CompletableFuture<ContentMetadataJSON> uploadContent(Long contentId, ByteBuffer stream, 
+                                                       String originalFileName, MediaType mediaType,
+                                                       Map<String, String> customMetadata, UserJSON user) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                //validateVideoFileName(originalFileName);
+                
+                String contentType = determineContentType(originalFileName);
+                ContentMetadataJSON metadata = new ContentMetadataJSON(String.valueOf(contentId), originalFileName, mediaType, null, user);
+                if (customMetadata != null) {
+                    metadata.setCustomMetadata(customMetadata);
+                }
+                
+                // Prepare metadata for S3
+                Map<String, String> s3Metadata = new HashMap<>(metadata.getCustomMetadata());
+                // /s3Metadata.put("content-id", contentId);
+                s3Metadata.put("original-filename", originalFileName);
+                s3Metadata.put("upload-time", metadata.getUploadTime().toString());
+                
+                // Create put request with encryption
+                PutObjectRequest putRequest = PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(metadata.getS3Key())
+                        .contentType(contentType)
+                        //.contentLength(contentLength)
+                        //.metadata(s3Metadata)
+                        .serverSideEncryption(ServerSideEncryption.AWS_KMS)
+                        .ssekmsKeyId(kmsKeyId)
+                        .storageClass(StorageClass.fromValue(DEFAULT_STORAGE_CLASS))
+                        .acl(ObjectCannedACL.BUCKET_OWNER_FULL_CONTROL)
+                        .build();             
+                // Upload the stream
+                PutObjectResponse response = s3Client.putObject(putRequest, 
+                        RequestBody.fromByteBuffer(stream));
+
+                metadata.setEtag(response.eTag());
+                
+                LOGGER.info("Successfully uploaded video from stream: " + contentId + " to key: " + metadata.getS3Key());
+                return metadata;
+            } catch (Exception e) {
+                LOGGER.log(Level.SEVERE, "Failed to upload video from stream: " + contentId, e);
+                throw new RuntimeException("Upload failed", e);
+            }
+        }, executorService);
+    }
     
     /**
      * Generate a presigned URL for read-only access
@@ -271,7 +317,7 @@ public class S3AccessService implements S3AccessOperations{
     /**
      * Get video metadata
      */
-    public VideoMetadataJSON getVideoMetadata(String s3Key) {
+    public ContentMetadataJSON getVideoMetadata(String s3Key) {
         try {
             HeadObjectRequest headRequest = HeadObjectRequest.builder()
                     .bucket(bucketName)
@@ -280,22 +326,22 @@ public class S3AccessService implements S3AccessOperations{
             
             HeadObjectResponse response = s3Client.headObject(headRequest);
             
-            VideoMetadataJSON metadata = new VideoMetadataJSON();
+            ContentMetadataJSON metadata = new ContentMetadataJSON();
             metadata.setS3Key(s3Key);
-            metadata.setContentType(response.contentType());
-            metadata.setFileSize(response.contentLength());
+            //metadata.setContentType(response.contentType());
+            // /metadata.setFileSize(response.contentLength());
             metadata.setEtag(response.eTag());
             metadata.setUploadTime(LocalDateTime.ofInstant( response.lastModified(), ZoneId.systemDefault()));
             
             // Extract custom metadata
             Map<String, String> s3Metadata = response.metadata();
             if (s3Metadata != null) {
-                metadata.setVideoId(s3Metadata.get("video-id"));
-                metadata.setOriginalFileName(s3Metadata.get("original-filename"));
+                //metadata.setVideoId(s3Metadata.get("video-id"));
+                //metadata.setOriginalFileName(s3Metadata.get("original-filename"));
                 Map<String, String> customMetadata = new HashMap<>(s3Metadata);
-                customMetadata.remove("video-id");
-                customMetadata.remove("original-filename");
-                customMetadata.remove("upload-time");
+                //customMetadata.remove("video-id");
+                //customMetadata.remove("original-filename");
+                //customMetadata.remove("upload-time");
                 metadata.setCustomMetadata(customMetadata);
             }
             
@@ -310,7 +356,7 @@ public class S3AccessService implements S3AccessOperations{
     /**
      * List all videos in the bucket
      */
-    public List<VideoMetadataJSON> listVideos(String prefix, int maxKeys) {
+    public List<ContentMetadataJSON> listVideos(String prefix, int maxKeys) {
         try {
             ListObjectsV2Request listRequest = ListObjectsV2Request.builder()
                     .bucket(bucketName)
@@ -320,10 +366,10 @@ public class S3AccessService implements S3AccessOperations{
             
             ListObjectsV2Response response = s3Client.listObjectsV2(listRequest);
             
-            List<VideoMetadataJSON> videos = new ArrayList<>();
+            List<ContentMetadataJSON> videos = new ArrayList<>();
             for (S3Object obj : response.contents()) {
                 try {
-                    VideoMetadataJSON metadata = getVideoMetadata(obj.key());
+                    ContentMetadataJSON metadata = getVideoMetadata(obj.key());
                     videos.add(metadata);
                 } catch (Exception e) {
                     LOGGER.log(Level.WARNING, "Failed to get metadata for object: " + obj.key(), e);

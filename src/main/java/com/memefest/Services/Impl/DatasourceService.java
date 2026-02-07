@@ -73,7 +73,7 @@ public class DatasourceService implements DataSourceOps
         serverName = "localhost";
         instanceName = "CHHUMBUCKET";
         username = "Neutron";
-        password = "@ScoobyDoo24";
+        password = "ScoobyDoo24";
         encrypt = "false";
         portNumber = 1433;
         trustServerCertificate = true;

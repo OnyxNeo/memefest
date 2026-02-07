@@ -5,11 +5,13 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.ListIterator;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.memefest.DataAccess.JSON.CommentJSON;
 import com.memefest.DataAccess.JSON.JokeOfDayJSON;
 import com.memefest.DataAccess.JSON.PostJSON;
 import com.memefest.DataAccess.JSON.SponsorJSON;
@@ -23,6 +25,7 @@ import jakarta.ws.rs.OPTIONS;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
@@ -43,11 +46,14 @@ public class JokeOfDayResource extends Resource{
     @GET
     @Produces("application/json")
     public Response getJokeOfDay() throws JsonProcessingException{
+    /* 
        Set<JokeOfDayJSON> jokes =  jokeOps.getJokeOfDayBetween(LocalDate.now(), LocalDate.now());
        if(jokes.size() == 1)
             return Response.ok().entity(mapper.writeValueAsString(jokes.iterator().next())).build();
         else
             return Response.serverError().entity("Too many jokes of the day").build();
+    */
+    return Response.ok().entity(mapper.writeValueAsString(jokeOps.getJokeOfDay())).build();
     }
 
     @OPTIONS
@@ -132,9 +138,9 @@ public class JokeOfDayResource extends Resource{
     @GET
     @Path("{JokeId}/Comments")
     @Produces("application/json")
-    public Response getComments(@QueryParam("JokeId") int jokeId){
+    public Response getComments(@PathParam("JokeId") int jokeId){
         StringBuilder builder = new StringBuilder( "[");
-        ListIterator<PostJSON> iterator = jokeOps.getComments(new JokeOfDayJSON(Long.valueOf(jokeId), null, null,
+        ListIterator<CommentJSON> iterator = jokeOps.getComments(new JokeOfDayJSON(Long.valueOf(jokeId), null, null,
                                          0, null, null)).stream().collect(Collectors.toList()).listIterator();
         while(iterator.hasNext()) 
            try {
@@ -160,6 +166,24 @@ public class JokeOfDayResource extends Resource{
         return Response.ok().build();
     }
 
+
+    @POST
+    @Consumes("application/json")
+    @Path("{JokeId}/Comments")
+    @Produces("application/json")
+    public Response setComments(@PathParam("JokeId") int jokeId, String comment) throws JsonProcessingException{
+         if(comment == null)
+            return Response.noContent().build();
+        JokeOfDayJSON jokeOfDayJSON = new JokeOfDayJSON(Long.valueOf(jokeId), null, null, 0, null, null);
+        Set<CommentJSON> singletonComment = Collections.singleton(mapper.readValue(comment, CommentJSON.class));
+        jokeOfDayJSON.setComments(singletonComment);
+        
+        jokeOfDayJSON = jokeOps.jokeOfDayComment(jokeOfDayJSON);
+        return Response.ok(
+            //mapper.writeValueAsString(jokeOps.getJokeOfDayInfo(jokeOfDayJSON))
+            ).build();
+    }
+
     @OPTIONS
     @Path("{JokeId}")
     public Response jokeOfDayEditOptions(){
@@ -169,7 +193,7 @@ public class JokeOfDayResource extends Resource{
     @PUT
     @Path("{JokeId}") 
     @Consumes("appliaction/json")
-    public Response editJokeOfDay(@QueryParam("JokeId") int jokeId, String jokeOfDay) throws JsonProcessingException{
+    public Response editJokeOfDay(@PathParam("JokeId") int jokeId, String jokeOfDay) throws JsonProcessingException{
         JokeOfDayJSON jokeOfDayJSON = mapper.readValue(jokeOfDay, JokeOfDayJSON.class);
         jokeOfDayJSON.setJokeId(Long.valueOf(jokeId));
         jokeOps.editJokeOfDay(jokeOfDayJSON);

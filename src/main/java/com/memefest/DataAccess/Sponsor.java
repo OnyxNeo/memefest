@@ -20,7 +20,7 @@ public class Sponsor {
     @Column(name = "UserId")
     private Long userId;
 
-    @Column(name = "Name")
+    @Column(name = "Username")
     private String name;
 
     @Column(name = "Email")

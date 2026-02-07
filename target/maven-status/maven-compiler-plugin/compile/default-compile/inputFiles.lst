@@ -27,7 +27,6 @@ J:\memefest\src\main\java\com\memefest\DataAccess\TopicFollower.java
 J:\memefest\src\main\java\com\memefest\DataAccess\TopicCategory.java
 J:\memefest\src\main\java\com\memefest\DataAccess\Post.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JokeOfDayScheduleBackup.java
-J:\memefest\src\main\java\com\memefest\Security\AWSPrivateCAKeyLocatorAdapter.java
 J:\memefest\src\main\java\com\memefest\DataAccess\EventImage.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\InteractNotificationJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\TopicImageId.java
@@ -39,8 +38,10 @@ J:\memefest\src\main\java\com\memefest\DataAccess\EventPostNotification.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\SearchAllSubResource.java
 J:\memefest\src\main\java\com\memefest\Services\ImageOperations.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\EventJSON.java
+J:\memefest\src\main\java\com\memefest\DataAccess\JSON\MediaType.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\Providers\CustomJacksonMapperProvider.java
 J:\memefest\src\main\java\com\memefest\DataAccess\EventVideoId.java
+J:\memefest\src\main\java\com\memefest\DataAccess\JSON\Deserialize\CustomLocalDateDeserializer.java
 J:\memefest\src\main\java\com\memefest\Security\JwtAuthenticationMechanism.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\Providers\CrossOriginResourceSharingFilter.java
 J:\memefest\src\main\java\com\memefest\DataAccess\SubCategory.java
@@ -84,6 +85,7 @@ J:\memefest\src\main\java\com\memefest\DataAccess\JSON\VideoJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\EventCategory.java
 J:\memefest\src\main\java\com\memefest\DataAccess\UserAdmin.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\Providers\CustomLoginFilter.java
+J:\memefest\src\main\java\com\memefest\DataAccess\JSON\MediaJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\Video.java
 J:\memefest\src\main\java\com\memefest\DataAccess\EventNotificationId.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\PostNotificationSubResource.java
@@ -126,6 +128,7 @@ J:\memefest\src\main\java\com\memefest\DataAccess\PostNotificationId.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\UserLoginResource.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\Deserialize\CustomTopicAsKeyMapDeserializer.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\EventPostNotificationSubResource.java
+J:\memefest\src\main\java\com\memefest\DataAccess\JSON\ContentMetadataJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\TopicFollowNotificationId.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\SponsorJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\TopicImage.java
@@ -141,16 +144,17 @@ J:\memefest\src\main\java\com\memefest\DataAccess\PostCategory.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\CategoriesJSON.java
 J:\memefest\src\main\java\com\memefest\Services\JokeOfDayOperations.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\PostJSON.java
-J:\memefest\src\main\java\com\memefest\DataAccess\JSON\VideoMetadataJSON.java
 J:\memefest\src\main\java\com\memefest\Services\CategoryOperations.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\PostNotificationJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\PostVideoId.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\Deserialize\CustomLocalDateTimeDeserializer.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\JiniceRest.java
+J:\memefest\src\main\java\com\memefest\DataAccess\JSON\Serialize\CustomLocalDateSerializer.java
 J:\memefest\src\main\java\com\memefest\DataAccess\UserFollowerId.java
 J:\memefest\src\main\java\com\memefest\Jaxrs\SearchEventSubResource.java
 J:\memefest\src\main\java\com\memefest\Services\Impl\NotificationService.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\UserFollowNotificationJSON.java
+J:\memefest\src\main\java\com\memefest\DataAccess\JSON\CommentJSON.java
 J:\memefest\src\main\java\com\memefest\DataAccess\JSON\UserLoginJSON.java
 J:\memefest\src\main\java\com\memefest\Email\EmailSender.java
 J:\memefest\src\main\java\com\memefest\DataAccess\Image.java

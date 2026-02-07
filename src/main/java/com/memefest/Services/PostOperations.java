@@ -22,11 +22,11 @@ import jakarta.persistence.NoResultException;
 @Local
 public interface PostOperations {
 
-    public void editPostReplies(PostWithReplyJSON post);
+    public PostWithReplyJSON editPostReplies(PostWithReplyJSON post);
 
     public void removePostReplies(PostWithReplyJSON post);
 
-    public void editPostWithReply(PostWithReplyJSON post);
+    public PostWithReplyJSON editPostWithReply(PostWithReplyJSON post);
 
     public void removePostWithReply(PostWithReplyJSON post);
 
@@ -38,7 +38,7 @@ public interface PostOperations {
 
     public Post getPostEntity(PostJSON post);
 
-    public void editPost(PostJSON post);
+    public PostJSON editPost(PostJSON post);
 
     public void removePost(PostJSON post);
 

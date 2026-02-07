@@ -8,24 +8,27 @@ import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 
 @JsonIdentityInfo(generator = ObjectIdGenerators.None.class, property = "VideoID")
 @JsonRootName("Clip")
-public class VideoJSON {
+public class VideoJSON extends MediaJSON{
     
-    @JsonProperty("ClipID")
+    @JsonProperty("clipID")
     private Long vidId;
 
-    @JsonProperty("ClipPath")
+    @JsonProperty("clipPath")
     private String vidPath;
 
-    @JsonProperty("ClipTitle") 
+    @JsonProperty("clipTitle") 
     private String title;
 
-    @JsonProperty("Canceled")
+    @JsonProperty("canceled")
     private boolean isCanceled;
 
+    @JsonProperty("thumbNail")
+    private ImageJSON thumbNail;
+
     @JsonCreator
-    public VideoJSON(@JsonProperty("ClipID") Long vidId,
-                        @JsonProperty("ClipPath") String vidPath, 
-                            @JsonProperty("ClipTitle") String title) {
+    public VideoJSON(@JsonProperty("clipID") Long vidId,
+                        @JsonProperty("clipPath") String vidPath, 
+                            @JsonProperty("clipTitle") String title) {
         this.vidId = vidId;
         this.vidPath = vidPath;
         this.title = title;
@@ -62,5 +65,13 @@ public class VideoJSON {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public void setThumbnail(ImageJSON image){
+        this.thumbNail = image;
+    }
+
+    public ImageJSON getThumbnail(){
+        return this.thumbNail;
     }
 }

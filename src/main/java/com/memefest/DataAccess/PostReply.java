@@ -13,7 +13,10 @@ import jakarta.persistence.Table;
 @NamedQueries({@NamedQuery(name = "PostReplyEntity.getRepliesOfPostId", 
   query = "SELECT pr FROM PostReplyEntity pr WHERE pr.postReplyId.parentId = :postId"),
 @NamedQuery(name =  "PostReplyEntity.getRepliesByUserId",
-  query = "SELECT pr FROM PostReplyEntity pr WHERE pr.post.userId = :userId")
+  query = "SELECT pr FROM PostReplyEntity pr WHERE pr.post.userId = :userId"),
+@NamedQuery(name = "PostReplyEntity.getCommentCount",
+  query = "SELECT COUNT(pr) FROM PostReplyEntity pr WHERE pr.postReplyId.parentId = :postId"
+)
 })
 @Entity(name = "PostReplyEntity")
 @Table(name = "REPLY")
@@ -22,7 +25,7 @@ public class PostReply{
   @EmbeddedId
   private PostReplyId postReplyId = new PostReplyId();
   
-  @OneToOne(cascade = {CascadeType.MERGE})
+  @OneToOne(cascade = {CascadeType.MERGE}, optional = false)
   @JoinColumn(name = "Post_Id", referencedColumnName = "Post_Id")
   private Post post;
 
@@ -51,6 +54,10 @@ public class PostReply{
 
   public Long getPost_Id(){
     return this.postReplyId.getPost_Id();
+  }
+
+  public void setPost_Id(Long postId){
+    this.postReplyId.setPost_Id(postId);
   }
 
   public Long getPost_Info() {

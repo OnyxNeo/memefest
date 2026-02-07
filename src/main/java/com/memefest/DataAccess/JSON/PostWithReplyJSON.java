@@ -13,6 +13,9 @@ public class PostWithReplyJSON extends PostJSON {
   @JsonProperty("comments") 
   private Set<PostJSON> posts;
   
+  @JsonProperty("commentCount")
+  private int commentCount;
+
   @JsonCreator
   public PostWithReplyJSON(@JsonProperty("id") Long postId,
                       @JsonProperty("body") String comment, @JsonProperty("createdAt") 
@@ -35,5 +38,15 @@ public class PostWithReplyJSON extends PostJSON {
   @JsonProperty("comments")
   public void setPosts(Set<PostJSON> posts) {
     this.posts = posts;
+  }
+
+  @JsonProperty("commentCount")
+  public int getCommentCount(){
+    return commentCount;
+  }
+
+  @JsonProperty("commentCount")
+  public void setCommentCount(int count){
+    this.commentCount = count;
   }
 }

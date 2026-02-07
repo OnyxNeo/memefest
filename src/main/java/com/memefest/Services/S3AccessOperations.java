@@ -2,24 +2,26 @@ package com.memefest.Services;
 
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-import com.memefest.DataAccess.JSON.VideoMetadataJSON;
+import com.memefest.DataAccess.JSON.ContentMetadataJSON;
+import com.memefest.DataAccess.JSON.MediaType;
+import com.memefest.DataAccess.JSON.UserJSON;
 
 public interface S3AccessOperations {
     
-    public CompletableFuture<VideoMetadataJSON> uploadVideo(String videoId, InputStream videoStream, 
-                                                                String originalFileName, long contentLength,
-                                                                    Map<String, String> customMetadata);
-
+    public CompletableFuture<ContentMetadataJSON> uploadContent(Long contentId, ByteBuffer stream, 
+                                                                String originalFileName, MediaType mediaType,
+                                                                    Map<String, String> customMetadata, UserJSON user);                                                                
     public URL generateReadOnlyUrl(String s3Key, Duration expiration);
 
-    public VideoMetadataJSON getVideoMetadata(String s3Key);
+    public ContentMetadataJSON getVideoMetadata(String s3Key);
 
-    public List<VideoMetadataJSON> listVideos(String prefix, int maxKeys);
+    public List<ContentMetadataJSON> listVideos(String prefix, int maxKeys);
     
     public void deleteVideo(String s3Key);
     

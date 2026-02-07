@@ -1,5 +1,7 @@
 package com.memefest.Services.Impl;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Collections;
@@ -41,7 +43,6 @@ import com.memefest.DataAccess.JSON.UserJSON;
 import com.memefest.Services.CategoryOperations;
 import com.memefest.Services.DataSourceOps;
 import com.memefest.Services.EventOperations;
-import com.memefest.Services.NotificationOperations;
 import com.memefest.Services.PostOperations;
 import com.memefest.Services.TopicOperations;
 import com.memefest.Services.UserOperations;
@@ -50,9 +51,8 @@ import jakarta.annotation.PreDestroy;
 import jakarta.ejb.EJB;
 import jakarta.ejb.EJBException;
 import jakarta.ejb.EJBTransactionRolledbackException;
-import jakarta.ejb.PostActivate;
-import jakarta.ejb.PrePassivate;
 import jakarta.ejb.Stateful;
+import jakarta.ejb.Stateless;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
 import jakarta.ejb.TransactionManagement;
@@ -60,9 +60,8 @@ import jakarta.ejb.TransactionManagementType;
 import jakarta.ejb.TransactionRolledbackLocalException;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
-import jakarta.persistence.Query;
 
-@Stateful(name = "PostService")
+@Stateless(name = "PostService")
 //@SessionScoped
 @TransactionManagement(TransactionManagementType.CONTAINER)
 public class PostService implements PostOperations{
@@ -84,14 +83,11 @@ public class PostService implements PostOperations{
     private TopicOperations topicOperations;
 
     @EJB
-    private NotificationOperations notOps;
-
-    @EJB
     private DataSourceOps dataSourceOps;
 
 
     @PostConstruct
-    @PostActivate
+    //@PostActivate
     public void init(){
         //entityManager = dataSourceOps.getPersistenceContext().getEmf().createEntityManager();
         //this.entityManager = dataSourceOps.getEntityManager("PostServicePersistenceUnit");
@@ -101,24 +97,27 @@ public class PostService implements PostOperations{
     }
 
     @PreDestroy
-    @PrePassivate
+    // /@PrePassivate
     public void destroy(){
         entityManager.close();
     }
     
 
     /* */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    //@Transactional
     //add custom exception to show object was not created
-    private void createPost(PostJSON post) {
-        //entityManager.joinTransaction();
+   //@Transactional
+    private PostJSON createPost(PostJSON post) {
+        entityManager.joinTransaction();
         User user = null;
         user = this.userOperations.getUserEntity(post.getUser());
         //EntityManagerFactory fact = Persistence.createEntityManagerFactory(null, null);
         //entityManager.setProperty("", fact);
+        LocalDateTime created = post.getCreated() != null ? post.getCreated() :  LocalDateTime.now();
         Post newPost = new Post();
-        newPost.setComment(post.getComment());
-        newPost.setCreated(Date.from(post.getCreated().atZone(ZoneId.systemDefault()).toInstant()));
+        newPost.setComment(new String(post.getComment().getBytes(), StandardCharsets.UTF_8));
+        newPost.setCreated(Date.from(created.atZone(ZoneId.systemDefault()).toInstant()));
         newPost.setUser(user);
         this.entityManager.persist(newPost);
         if(post.getCategories() != null)
@@ -127,6 +126,11 @@ public class PostService implements PostOperations{
                     Category categoryEntity = catOps.getCategoryEntity(category);
                     createPostCategory(newPost, categoryEntity);
         }); 
+        /* post.setPostId(newPost.getPost_Id());
+        */
+        entityManager.flush();
+        post.setPostId(newPost.getPost_Id());
+        return post;
     }
 
     private void editPostCategory(PostJSON post){
@@ -242,7 +246,9 @@ public class PostService implements PostOperations{
         });
     }
 
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
     private void createPostCategory(Post post, Category category){
+        entityManager.joinTransaction();
         PostCategory postCat = new PostCategory();
         postCat.setCat_Id(category.getCat_Id());
         postCat.setPost_Id(post.getPost_Id());
@@ -268,10 +274,10 @@ public class PostService implements PostOperations{
             postCat.setPost_Id(postEntity.getPost_Id());
             entityManager.remove(entityManager.find(PostCategory.class,postCat));
     }
+
     /* */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    private void createEventPost(Post post, Event event){   
-            
+    private void createEventPost(Post post, Event event){           
             EventPost  eventPostEntity = new EventPost();
             eventPostEntity.setEvent(event);
             eventPostEntity.setPost(post);
@@ -281,7 +287,7 @@ public class PostService implements PostOperations{
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //add custom exception to show object was not created
     public void editEventPost(EventPostJSON eventPost){
-        //entityManager.joinTransaction();
+        entityManager.joinTransaction();
         if(eventPost== null || eventPost.getEvent() == null)
             return;
         try{
@@ -295,8 +301,8 @@ public class PostService implements PostOperations{
                 event = eventOperations.getEventEntity(eventPost.getEvent());
             }
             catch(NoResultException | EJBException ec){
-                eventOperations.editEvent(eventPost.getEvent());
-                event = eventOperations.getEventEntity(eventPost.getEvent());
+                ;
+                event = eventOperations.getEventEntity(eventOperations.editEvent(eventPost.getEvent()));
             }
             try{
                 postEntity = getPostEntity((PostJSON)eventPost);    
@@ -355,6 +361,7 @@ public class PostService implements PostOperations{
         //if(repos)
     }
 */
+
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public RepostJSON getRepostInfo(RepostJSON repost){
         Post postEntity = null;
@@ -429,7 +436,7 @@ public class PostService implements PostOperations{
                     }).collect(Collectors.toSet());   
     }    
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     //add custom exception to show object was not created
     public void editRepost(RepostJSON post){
         //entityManager.joinTransaction();
@@ -488,48 +495,50 @@ public class PostService implements PostOperations{
         }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
     //add custom exception to show object was not created
-    private void createPostReplies(PostWithReplyJSON post) {
-        //entityManager.joinTransaction();
+    private PostWithReplyJSON createPostReplies(PostWithReplyJSON post) {
+        entityManager.joinTransaction();
         Post parent = null; 
         try{
             parent = getPostEntity((PostJSON)post);
         }
-        catch(NoResultException | EJBException ex){
-            createPost((PostJSON)post);
-            createPostReplies(post);
-            return;
+        catch(NoResultException ex){
+            PostJSON newPost = createPost((PostJSON)post);
+            post.setPostId(newPost.getPostId());
+            return createPostReplies(post);
         }
         if (post.getPosts() == null)
-            return;
+            return post;
+        Set<PostJSON> comments = new HashSet<PostJSON>();
         for(PostJSON postInst : post.getPosts()) {
             Post child = null;
             try{
                 child = getPostEntity(postInst);
                 try{
-                    getPostReplyEntity(postInst, (PostJSON) post);
+                    getPostReplyEntity(child,parent);
                 }
-                catch(NoResultException | EJBException ex){
+                catch(NoResultException ex){
                     createPostReply(child, parent);
                 }
             }
-            catch(NoResultException |EJBException ex){
-                createPost(postInst);
-                child = getPostEntity(postInst);
-                createPostReply(child, parent);   
+            catch(NoResultException ex){
+                PostJSON newPost = createPost(postInst);
+                child = getPostEntity(newPost);
+                createPostReply(child, parent);
+                comments.add(newPost);
             }
-            
         }
+        post.setPosts(comments);
+        return post;
     }
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    private PostReply getPostReplyEntity(PostJSON post, PostJSON parent) throws NoResultException{
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
+    private PostReply getPostReplyEntity(Post post, Post parent) throws NoResultException{
         //entityManager.joinTransaction();
         PostReplyId postRepId = new PostReplyId();
-        postRepId.setPost_Id(post.getPostId());
-        postRepId.setPost_Info(parent.getPostId());
-
+        postRepId.setPost_Id(post.getPost_Id());
+        postRepId.setPost_Info(parent.getPost_Id());
         PostReply result = null;
         result = entityManager.find(PostReply.class, postRepId);
         if(result != null)
@@ -537,10 +546,12 @@ public class PostService implements PostOperations{
         throw new NoResultException();
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionAttribute(TransactionAttributeType.MANDATORY)
+    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
+    @TransactionAttribute(TransactionAttributeType.MANDATORY)
     private void createPostReply(Post post, Post parent){
         //entityManager.joinTransaction();
+        entityManager.merge(post);
+        entityManager.merge(parent);
             if (post == null || parent == null)
                 return;
          //editPost(post);
@@ -548,11 +559,13 @@ public class PostService implements PostOperations{
                 PostReplyId postReplyId = new PostReplyId();
                 postReplyId.setPost_Id(post.getPost_Id());
                 postReplyId.setPost_Info(parent.getPost_Id());
-                PostReply result =this.entityManager.find(PostReply.class, postReplyId);
-                if(result== null){
+                PostReply result = this.entityManager.find(PostReply.class, postReplyId);
+                if(result == null){
                     PostReply postReply = new PostReply();
                     postReply.setParent(parent);
                     postReply.setPost(post);
+                    postReply.setPost_Id(post.getPost_Id());
+                    postReply.setPost_Info(parent.getPost_Id());
                     this.entityManager.persist(postReply);
                 }
             }
@@ -560,23 +573,27 @@ public class PostService implements PostOperations{
                 PostReply postReply = new PostReply();
                 postReply.setParent(parent);
                 postReply.setPost(post);
+                postReply.setPost_Id(post.getPost_Id());
+                postReply.setPost_Info(parent.getPost_Id());
                 this.entityManager.persist(postReply);
             }
     }
 
-    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    //@TransactionAttribute(TransactionAttributeType.REQUIRED)
     //add custom exception to show object was not created
-    public void editPostReplies(PostWithReplyJSON post){
+    public PostWithReplyJSON editPostReplies(PostWithReplyJSON post){
+        /* 
         try{
             getPostEntity(post);
         }
-        catch(NoResultException | EJBException ex){
+        catch(NoResultException ex){
             createPost(post);
-            editPostReplies(post);
-            return;
-        }
-        createPostReplies(post);
             //editPostReplies(post);
+            //return;
+        }
+        */
+        return createPostReplies(post);
+           //editPostReplies(post);
             //return;
     }
     
@@ -592,8 +609,8 @@ public class PostService implements PostOperations{
     
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //add custom exception to show object was not created
-    public void editPost(PostJSON post) {
-        entityManager.joinTransaction();
+    public PostJSON editPost(PostJSON post){
+        //entityManager.joinTransaction();
         try{
             Post postEntity = getPostEntity(post);
             this.userOperations.getUserEntity(post.getUser()); 
@@ -601,22 +618,24 @@ public class PostService implements PostOperations{
                 postEntity.setComment(post.getComment());  
             if (post.getCreated() != null)
                 postEntity.setCreated(Date.from(post.getCreated().atZone(ZoneId.systemDefault()).toInstant())); 
-            this.entityManager.merge(postEntity);
-            postEntity = getPostEntity(post);
+            this.entityManager.persist(postEntity);
             editPostCategory(post);
             editPostTaggedUsers(post);
+            return post;
         }catch(NoResultException ex){
-            createPost(post);
-            return;
+            post = createPost(post);
+            return post;
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void togglePostUpvote(PostJSON post, UserJSON user){
+        this.entityManager.joinTransaction();
         try {
             Interact interact = getInteractEntity(user, post);
             if(interact.getInteract() == false){
                 interact.setInteract(true);
-                entityManager.merge(interact);    
+                entityManager.persist(interact);   
             }
             else
                 this.entityManager.remove(interact);
@@ -627,16 +646,18 @@ public class PostService implements PostOperations{
             interact.setPost(postEntity);
             interact.setUser(userEntity);
             interact.setInteract(true);
-            this.entityManager.persist(interact);    
+            this.entityManager.persist(interact);
+            this.entityManager.flush();    
         }
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void togglePostDownvote(PostJSON post, UserJSON user){
         try {
             Interact interact = getInteractEntity(user, post);
             if(interact.getInteract() == true){
                 interact.setInteract(false);
-                entityManager.merge(interact);    
+                entityManager.persist(interact);    
             }
             else
                 this.entityManager.remove(interact);
@@ -647,7 +668,18 @@ public class PostService implements PostOperations{
             interact.setPost(postEntity);
             interact.setUser(userEntity);
             interact.setInteract(false);
-            this.entityManager.merge(interact);    
+            this.entityManager.persist(interact);
+            this.entityManager.flush();    
+        }
+    }
+
+    private int getPostReplyCount(PostJSON post){
+        Post postEntity  = getPostEntity(post);
+        try{
+            return this.entityManager.createNamedQuery("PostReplyEntity.getCommentCount", Integer.class)
+                    .setParameter("postId", postEntity.getPost_Id()).getSingleResult().intValue();
+        }catch(NoResultException ex){
+            return 0;
         }
     }
 
@@ -668,18 +700,20 @@ public class PostService implements PostOperations{
 
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     //add custom exception to show object was not created
-    public void editPostWithReply(PostWithReplyJSON postWithReply){       
-        try{
+    public PostWithReplyJSON editPostWithReply(PostWithReplyJSON postWithReply){       
+         //entityManager.joinTransaction();
+        /*try{
             getPostEntity((PostJSON)postWithReply);
             editPost(postWithReply);
             //editPost(postWithReply);
         }
-        catch(NoResultException |EJBException ex){
+        catch(NoResultException ex){
             createPost((PostJSON)postWithReply);
             //editPostWithReply(postWithReply);
         }
+        */
         //createPostReplies(postWithReply);
-        editPostReplies(postWithReply);
+        return editPostReplies(postWithReply);
         //removePostReplies(postWithReply);
     }
 
@@ -687,6 +721,7 @@ public class PostService implements PostOperations{
     public void removePostWithReply(PostWithReplyJSON postWithReply){
         //entityManager.joinTransaction();
         try{
+            entityManager.joinTransaction();
             Post postEntity = getPostEntity((PostJSON)postWithReply);
             if (postEntity != null && postEntity.getPost_Id()!= null) {
                 this.entityManager.remove(postEntity);
@@ -793,8 +828,7 @@ public class PostService implements PostOperations{
         Set<UserJSON> taggedUsers = getPostTaggedUsers(postInfo);
         Set<CategoryJSON> categories = getPostCategories(new PostJSON(postInfo.getPost_Id(), null, null, 0, 0, null, null, null, null));
             int downVotes = 0;
-            int upvotes = 0;
-                
+            int upvotes = 0;            
             try {
                 Set<Interact> interactions = getInteractionsForPost(post);
                 upvotes = interactions.stream().filter(candidate ->{
@@ -806,7 +840,7 @@ public class PostService implements PostOperations{
                             });
                     downVotes = interactions.size() - upvotes;
             } catch (NoResultException e) {
-                    
+
             }      
         post = new PostJSON(postInfo.getPost_Id(), postInfo.getComment(), 
         LocalDateTime.ofInstant(postInfo.getCreated().toInstant(), ZoneId.systemDefault()), 
@@ -817,8 +851,11 @@ public class PostService implements PostOperations{
         UserJSON user = post.getUser();
         user.setAvatar("");
         post.setUser(user);
+        post.setCommentCount(getPostReplyCount(post));
         return post;
     }
+
+
     
     @TransactionAttribute(TransactionAttributeType.REQUIRED)
     public void removeTopicPost(TopicPostJSON topicPost){
@@ -852,8 +889,8 @@ public class PostService implements PostOperations{
                 topic = topicOperations.getTopicEntity(topicPost.getTopic());
             }
             catch(NoResultException | EJBException ec){
-                topicOperations.createTopic(topicPost.getTopic());
-                topic = topicOperations.getTopicEntity(topicPost.getTopic());
+                TopicJSON foundTopic = topicOperations.editTopic(topicPost.getTopic());
+                topic = topicOperations.getTopicEntity(foundTopic);
             }
 
             try{
@@ -868,10 +905,7 @@ public class PostService implements PostOperations{
     }
     
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public Post getPostEntity(PostJSON post) throws NoResultException,
-                                                        TransactionRolledbackLocalException,
-                                                            EJBTransactionRolledbackException,
-                                                                EJBException {
+    public Post getPostEntity(PostJSON post) throws NoResultException{
         //entityManager.joinTransaction();
         if(post == null)
             throw new NoResultException();
@@ -882,16 +916,22 @@ public class PostService implements PostOperations{
                 return postEntity;
             else throw new NoResultException();
         }
+        else{
+            throw new NoResultException();
+        }
+        /* 
         else if(post.getComment() != null) {
-            Query query = this.entityManager.createNamedQuery("Post.getPostByComment",Post.class);
-            query.setParameter(1, post.getComment());
-            postEntity =(Post) query.getSingleResult();
+            Query query = this.entityManager.createNamedQuery("Post.getPostByComment", Post.class);
+            String comment = '"' + post.getComment() + '*' + '"';
+            query.setParameter(1, comment);
+            postEntity = (Post) query.getSingleResult();
              if (postEntity != null)
                 return postEntity;
             else
              throw new NoResultException();
         }
         throw new NoResultException();
+        */
     }
     
     @TransactionAttribute(TransactionAttributeType.MANDATORY)
@@ -912,7 +952,7 @@ public class PostService implements PostOperations{
         } 
     }
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @TransactionAttribute(TransactionAttributeType.SUPPORTS)
     public Set<PostReply> getPostReplyEntities(PostWithReplyJSON postWithReply) throws NoResultException, 
                                                                                         TransactionRolledbackLocalException,
                                                                                             EJBTransactionRolledbackException,
